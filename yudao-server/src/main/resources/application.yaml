@@ -3,7 +3,8 @@ spring:
     name: yudao-server
 
   profiles:
-    active: local
+#    active: local # 本地
+    active: dev # 上传服务器
 
   main:
     allow-circular-references: true # 允许循环依赖，因为项目是三层架构，无法避免这个情况。
