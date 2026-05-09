@@ -29,6 +29,7 @@ import cn.iocoder.yudao.module.system.service.permission.RoleService;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+import cn.iocoder.yudao.module.system.util.tenant.TenantWebsiteUtils;
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -179,7 +181,7 @@ public class TenantServiceImpl implements TenantService {
             return;
         }
         websites.forEach(website -> {
-            List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
+            List<TenantDO> tenants = getTenantListByWebsite(website);
             if (excludeId != null) {
                 tenants.removeIf(tenant -> tenant.getId().equals(excludeId));
             }
@@ -260,8 +262,19 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     public TenantDO getTenantByWebsite(String website) {
-        List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
+        List<TenantDO> tenants = getTenantListByWebsite(website);
         return CollUtil.getFirst(tenants);
+    }
+
+    private List<TenantDO> getTenantListByWebsite(String website) {
+        List<TenantDO> tenants = new ArrayList<>();
+        TenantWebsiteUtils.buildQueryCandidates(website).forEach(candidate ->
+                tenantMapper.selectListByWebsite(candidate).forEach(tenant -> {
+                    if (tenants.stream().noneMatch(item -> Objects.equals(item.getId(), tenant.getId()))) {
+                        tenants.add(tenant);
+                    }
+                }));
+        return tenants;
     }
 
     @Override

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.NotBlank;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
@@ -37,7 +37,7 @@ public class AppTenantController {
     @Operation(summary = "使用域名，获得租户信息", description = "根据用户的域名，获得租户信息")
     @Parameter(name = "website", description = "域名", required = true, example = "www.iocoder.cn")
     public CommonResult<AppTenantRespVO> getTenantByWebsite(
-            @RequestParam("website") @Pattern(regexp = "^[a-zA-Z0-9.-]+$", message = "网站域名格式不正确") String website) {
+            @RequestParam("website") @NotBlank(message = "网站域名不能为空") String website) {
         TenantDO tenant = tenantService.getTenantByWebsite(website);
         if (tenant == null || CommonStatusEnum.isDisable(tenant.getStatus())) {
             return success(null);
