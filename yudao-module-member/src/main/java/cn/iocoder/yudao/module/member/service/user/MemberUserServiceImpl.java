@@ -13,6 +13,8 @@ import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateR
 import cn.iocoder.yudao.module.member.controller.app.user.vo.*;
 import cn.iocoder.yudao.module.member.convert.auth.AuthConvert;
 import cn.iocoder.yudao.module.member.convert.user.MemberUserConvert;
+import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberAvatarsDO;
+import cn.iocoder.yudao.module.member.service.social.AvatarService;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.dal.mysql.user.MemberUserMapper;
 import cn.iocoder.yudao.module.member.mq.producer.user.MemberUserProducer;
@@ -60,6 +62,8 @@ public class MemberUserServiceImpl implements MemberUserService {
 
     @Resource
     private PasswordEncoder passwordEncoder;
+    @Resource
+    private AvatarService avatarService;
 
     @Resource
     private MemberUserProducer memberUserProducer;
@@ -312,6 +316,54 @@ public class MemberUserServiceImpl implements MemberUserService {
             return memberUserMapper.updatePointDecr(id, point) > 0;
         }
         return true;
+    }
+
+    // ========== 社交分身 ==========
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createClone(Long userId, AppMemberUserCloneCreateReqVO reqVO) {
+        MemberUserDO user = validateUserExists(userId);
+        if (Boolean.TRUE.equals(user.getIsHasCloned())) {
+            throw exception(CLONE_ALREADY_CREATED);
+        }
+        // 随机分配头像
+        MemberAvatarsDO avatar = avatarService.getRandomAvatar();
+        String avatarUrl = (avatar != null) ? avatar.getImageUrl() : null;
+
+        // 更新用户信息
+        MemberUserDO updateObj = MemberUserConvert.INSTANCE.convert(reqVO);
+        updateObj.setId(userId);
+        updateObj.setAvatar(avatarUrl);
+        updateObj.setIsHasCloned(true);
+        memberUserMapper.updateById(updateObj);
+    }
+
+    @Override
+    public AppMemberUserCloneInfoRespVO getCloneInfo(Long userId) {
+        MemberUserDO user = validateUserExists(userId);
+        return MemberUserConvert.INSTANCE.convertClone(user);
+    }
+
+    @Override
+    public void updateClone(Long userId, AppMemberUserCloneUpdateReqVO reqVO) {
+        MemberUserDO user = validateUserExists(userId);
+        if (!Boolean.TRUE.equals(user.getIsHasCloned())) {
+            throw exception(USER_NOT_CLONED);
+        }
+        // 使用BeanUtils复制非null字段
+        MemberUserDO updateObj = BeanUtils.toBean(reqVO, MemberUserDO.class);
+        updateObj.setId(userId);
+        memberUserMapper.updateById(updateObj);
+    }
+
+    @Override
+    public String randomizeAvatar(Long userId) {
+        MemberUserDO user = validateUserExists(userId);
+        MemberAvatarsDO avatar = avatarService.getRandomAvatar();
+        String avatarUrl = (avatar != null) ? avatar.getImageUrl() : null;
+        memberUserMapper.updateById(new MemberUserDO().setId(userId).setAvatar(avatarUrl));
+        return avatarUrl;
     }
 
 }

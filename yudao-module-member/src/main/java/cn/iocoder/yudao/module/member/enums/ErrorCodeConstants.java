@@ -55,4 +55,15 @@ public interface ErrorCodeConstants {
     ErrorCode GROUP_NOT_EXISTS = new ErrorCode(1_004_012_000, "用户分组不存在");
     ErrorCode GROUP_HAS_USER = new ErrorCode(1_004_012_001, "用户分组下存在用户，无法删除");
 
+    //========== 社交模块 1-004-013-000 ==========
+    ErrorCode CLONE_ALREADY_CREATED = new ErrorCode(1_004_013_000, "分身已创建，不能重复创建");
+    ErrorCode NICKNAME_GEN_LIMIT = new ErrorCode(1_004_013_001, "今天昵称生成次数已达上限({}次)");
+    ErrorCode SCENE_NOT_EXISTS = new ErrorCode(1_004_013_002, "场景不存在");
+    ErrorCode MATCH_TASK_EXISTS = new ErrorCode(1_004_013_003, "当前场景已有匹配任务进行中");
+    ErrorCode MATCH_COOLDOWN = new ErrorCode(1_004_013_004, "同场景匹配冷却中，距离上次匹配不足{}小时");
+    ErrorCode MATCH_TASK_NOT_EXISTS = new ErrorCode(1_004_013_005, "匹配任务不存在");
+    ErrorCode SCHOOL_VERIFY_EXISTS = new ErrorCode(1_004_013_006, "已有待审核的学校认证申请");
+    ErrorCode USER_NOT_CLONED = new ErrorCode(1_004_013_007, "用户尚未创建分身");
+    ErrorCode TAG_NOT_EXISTS_V2 = new ErrorCode(1_004_013_008, "标签不存在");
+
 }

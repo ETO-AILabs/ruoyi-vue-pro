@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -118,6 +119,35 @@ public class MemberUserDO extends TenantBaseDO {
      */
     private Integer point;
     // TODO 疯狂：增加一个 totalPoint；个人信息接口要返回
+
+    /**
+     * 是否已创建分身
+     */
+    private Boolean isHasCloned;
+    /**
+     * 是否学生认证
+     */
+    private Boolean isVerified;
+    /**
+     * 经度
+     */
+    private BigDecimal longitude;
+    /**
+     * 纬度
+     */
+    private BigDecimal latitude;
+    /**
+     * 地理位置名称
+     */
+    private String location;
+    /**
+     * 微信号
+     */
+    private String wechat;
+    /**
+     * 个人描述
+     */
+    private String userDesc;
 
     /**
      * 会员标签列表，以逗号分隔

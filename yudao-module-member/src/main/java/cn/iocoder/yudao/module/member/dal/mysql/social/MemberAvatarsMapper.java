@@ -1,0 +1,10 @@
+package cn.iocoder.yudao.module.member.dal.mysql.social;
+
+import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
+import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberAvatarsDO;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface MemberAvatarsMapper extends BaseMapperX<MemberAvatarsDO> {
+
+}

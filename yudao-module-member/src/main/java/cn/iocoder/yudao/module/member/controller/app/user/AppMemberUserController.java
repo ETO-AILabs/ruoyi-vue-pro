@@ -6,8 +6,10 @@ import cn.iocoder.yudao.module.member.convert.user.MemberUserConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.service.level.MemberLevelService;
+import cn.iocoder.yudao.module.member.service.social.NicknameService;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -31,6 +33,8 @@ public class AppMemberUserController {
     private MemberUserService userService;
     @Resource
     private MemberLevelService levelService;
+    @Resource
+    private NicknameService nicknameService;
 
     @GetMapping("/get")
     @Operation(summary = "获得基本信息")
@@ -74,6 +78,41 @@ public class AppMemberUserController {
     public CommonResult<Boolean> resetUserPassword(@RequestBody @Valid AppMemberUserResetPasswordReqVO reqVO) {
         userService.resetUserPassword(reqVO);
         return success(true);
+    }
+
+    // ========== 社交分身 ==========
+
+    @PostMapping("/clone")
+    @Operation(summary = "创建分身")
+    public CommonResult<Boolean> createClone(@RequestBody @Valid AppMemberUserCloneCreateReqVO reqVO) {
+        userService.createClone(getLoginUserId(), reqVO);
+        return success(true);
+    }
+
+    @GetMapping("/clone/info")
+    @Operation(summary = "获取分身信息")
+    public CommonResult<AppMemberUserCloneInfoRespVO> getCloneInfo() {
+        return success(userService.getCloneInfo(getLoginUserId()));
+    }
+
+    @PutMapping("/clone")
+    @Operation(summary = "更新分身信息")
+    public CommonResult<Boolean> updateClone(@RequestBody @Valid AppMemberUserCloneUpdateReqVO reqVO) {
+        userService.updateClone(getLoginUserId(), reqVO);
+        return success(true);
+    }
+
+    @PostMapping("/nickname/generate")
+    @Operation(summary = "生成随机昵称")
+    public CommonResult<AppMemberUserNicknameGenerateRespVO> generateNickname() {
+        String nickname = nicknameService.generateNickname(getLoginUserId());
+        return success(new AppMemberUserNicknameGenerateRespVO(nickname, 0, 3));
+    }
+
+    @GetMapping("/avatar/random")
+    @Operation(summary = "随机获取头像")
+    public CommonResult<String> randomizeAvatar() {
+        return success(userService.randomizeAvatar(getLoginUserId()));
     }
 
 }

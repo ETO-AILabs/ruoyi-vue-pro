@@ -187,4 +187,26 @@ public interface MemberUserService {
      */
     boolean updateUserPoint(Long userId, Integer point);
 
+    // ========== 社交分身 ==========
+
+    /**
+     * 创建分身
+     */
+    void createClone(Long userId, AppMemberUserCloneCreateReqVO reqVO);
+
+    /**
+     * 获取分身信息
+     */
+    AppMemberUserCloneInfoRespVO getCloneInfo(Long userId);
+
+    /**
+     * 更新分身信息
+     */
+    void updateClone(Long userId, AppMemberUserCloneUpdateReqVO reqVO);
+
+    /**
+     * 随机更换头像
+     */
+    String randomizeAvatar(Long userId);
+
 }

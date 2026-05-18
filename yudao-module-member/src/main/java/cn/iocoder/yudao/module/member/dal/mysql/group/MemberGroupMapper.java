@@ -28,4 +28,11 @@ public interface MemberGroupMapper extends BaseMapperX<MemberGroupDO> {
     default List<MemberGroupDO> selectListByStatus(Integer status) {
         return selectList(MemberGroupDO::getStatus, status);
     }
+
+    default List<MemberGroupDO> selectSchoolListByNameLike(String name) {
+        return selectList(new LambdaQueryWrapperX<MemberGroupDO>()
+                .eq(MemberGroupDO::getGroupType, 1)
+                .likeIfPresent(MemberGroupDO::getName, name)
+                .orderByAsc(MemberGroupDO::getName));
+    }
 }

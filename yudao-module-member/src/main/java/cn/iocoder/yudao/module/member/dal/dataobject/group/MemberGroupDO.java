@@ -41,5 +41,9 @@ public class MemberGroupDO extends BaseDO {
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
+    /**
+     * 分组类型：1-学校
+     */
+    private Integer groupType;
 
 }

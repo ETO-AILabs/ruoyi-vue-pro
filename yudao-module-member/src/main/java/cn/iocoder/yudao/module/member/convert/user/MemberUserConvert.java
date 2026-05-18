@@ -4,6 +4,8 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
+import cn.iocoder.yudao.module.member.controller.app.user.vo.AppMemberUserCloneCreateReqVO;
+import cn.iocoder.yudao.module.member.controller.app.user.vo.AppMemberUserCloneInfoRespVO;
 import cn.iocoder.yudao.module.member.controller.app.user.vo.AppMemberUserInfoRespVO;
 import cn.iocoder.yudao.module.member.convert.address.AddressConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
@@ -27,6 +29,10 @@ public interface MemberUserConvert {
     MemberUserConvert INSTANCE = Mappers.getMapper(MemberUserConvert.class);
 
     AppMemberUserInfoRespVO convert(MemberUserDO bean);
+
+    AppMemberUserCloneInfoRespVO convertClone(MemberUserDO bean);
+
+    MemberUserDO convert(AppMemberUserCloneCreateReqVO bean);
 
 
     @Mappings({
