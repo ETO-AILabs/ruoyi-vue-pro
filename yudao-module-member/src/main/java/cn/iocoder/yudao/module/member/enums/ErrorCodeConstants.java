@@ -65,5 +65,6 @@ public interface ErrorCodeConstants {
     ErrorCode SCHOOL_VERIFY_EXISTS = new ErrorCode(1_004_013_006, "已有待审核的学校认证申请");
     ErrorCode USER_NOT_CLONED = new ErrorCode(1_004_013_007, "用户尚未创建分身");
     ErrorCode TAG_NOT_EXISTS_V2 = new ErrorCode(1_004_013_008, "标签不存在");
+    ErrorCode SCHOOL_VERIFY_NOT_EXISTS = new ErrorCode(1_004_013_009, "学校认证记录不存在");
 
 }

@@ -3,10 +3,8 @@ package cn.iocoder.yudao.module.member.service.social;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialMatchCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialMatchPageReqVO;
+import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialMatchSceneRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskDO;
-import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskResultDO;
-
-import java.util.List;
 
 public interface MatchService {
 
@@ -21,8 +19,8 @@ public interface MatchService {
     PageResult<MemberMatchTaskDO> getMatchTaskPage(Long userId, AppSocialMatchPageReqVO reqVO);
 
     /**
-     * 查询匹配结果（仅返回12h有效期内）
+     * 查询指定场景的最近匹配状态 + 有效匹配结果
      */
-    List<MemberMatchTaskResultDO> getMatchResultList(Long userId);
+    AppSocialMatchSceneRespVO getMatchSceneData(Long userId, Long sceneId);
 
 }

@@ -16,4 +16,29 @@ public interface MemberTagMapper extends BaseMapperX<MemberTagDO> {
                 .orderByAsc(MemberTagDO::getSort));
     }
 
+    default List<MemberTagDO> selectListByParentId(Long parentId) {
+        return selectList(new LambdaQueryWrapperX<MemberTagDO>()
+                .eq(MemberTagDO::getParentId, parentId)
+                .orderByAsc(MemberTagDO::getSort));
+    }
+
+    default List<MemberTagDO> selectListByCategory(String category) {
+        return selectList(new LambdaQueryWrapperX<MemberTagDO>()
+                .eq(MemberTagDO::getCategory, category)
+                .eq(MemberTagDO::getParentId, 0L)
+                .orderByAsc(MemberTagDO::getSort));
+    }
+
+    default MemberTagDO selectByParentIdAndCode(Long parentId, String code) {
+        return selectOne(new LambdaQueryWrapperX<MemberTagDO>()
+                .eq(MemberTagDO::getParentId, parentId)
+                .eq(MemberTagDO::getCode, code));
+    }
+
+    default List<MemberTagDO> selectListByParentIds(List<Long> parentIds) {
+        return selectList(new LambdaQueryWrapperX<MemberTagDO>()
+                .in(MemberTagDO::getParentId, parentIds)
+                .orderByAsc(MemberTagDO::getSort));
+    }
+
 }

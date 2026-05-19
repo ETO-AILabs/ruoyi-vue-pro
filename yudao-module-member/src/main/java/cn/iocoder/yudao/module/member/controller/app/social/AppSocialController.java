@@ -5,8 +5,6 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.*;
 import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
-import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskDO;
-import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskResultDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberTagDO;
 import cn.iocoder.yudao.module.member.service.social.MatchService;
@@ -109,11 +107,51 @@ public class AppSocialController {
         return success(SocialConvert.INSTANCE.convertMatchTaskPage(page));
     }
 
-    @GetMapping("/match/result/list")
-    @Operation(summary = "获取匹配结果列表")
-    public CommonResult<List<AppSocialMatchResultRespVO>> getMatchResultList() {
-        List<MemberMatchTaskResultDO> list = matchService.getMatchResultList(getLoginUserId());
-        return success(SocialConvert.INSTANCE.convertMatchResultList(list));
+    @GetMapping("/match/scene/status")
+    @Operation(summary = "获取指定场景的匹配状态和有效匹配结果")
+    @Parameter(name = "sceneId", description = "场景ID", required = true)
+    public CommonResult<AppSocialMatchSceneRespVO> getMatchSceneStatus(@RequestParam("sceneId") Long sceneId) {
+        return success(matchService.getMatchSceneData(getLoginUserId(), sceneId));
+    }
+
+    // ========== 场景表单 ==========
+
+    @GetMapping("/scene/form")
+    @Operation(summary = "获取场景表单")
+    @Parameter(name = "sceneCode", description = "场景编码", required = true)
+    public CommonResult<List<AppSocialSceneFormRespVO>> getSceneForm(@RequestParam("sceneCode") String sceneCode) {
+        return success(socialService.getSceneForm(sceneCode, getLoginUserId()));
+    }
+
+    // ========== 匹配配置 ==========
+
+    @PostMapping("/match/config/save")
+    @Operation(summary = "保存场景匹配配置")
+    public CommonResult<Boolean> saveMatchConfig(@RequestBody @Valid AppSocialMatchConfigSaveReqVO reqVO) {
+        return success(socialService.saveMatchConfig(reqVO.getSceneCode(), getLoginUserId(),
+                reqVO.getTagIds(), reqVO.getExtraFields()));
+    }
+
+    @GetMapping("/match/config/get")
+    @Operation(summary = "获取上次额外字段")
+    @Parameter(name = "sceneCode", description = "场景编码", required = true)
+    public CommonResult<Map<String, Object>> getMatchConfig(@RequestParam("sceneCode") String sceneCode) {
+        return success(socialService.getMatchConfig(sceneCode, getLoginUserId()));
+    }
+
+    // ========== 用户标签 ==========
+
+    @PostMapping("/user-tag/batch-save")
+    @Operation(summary = "批量保存用户标签(覆盖式)")
+    public CommonResult<Boolean> batchSaveUserTag(@RequestBody @Valid AppSocialUserTagBatchSaveReqVO reqVO) {
+        socialService.batchSaveUserTag(getLoginUserId(), reqVO.getTagIds(), reqVO.getSource());
+        return success(true);
+    }
+
+    @GetMapping("/user-tag/list")
+    @Operation(summary = "获取用户标签ID列表")
+    public CommonResult<List<Long>> getUserTagList() {
+        return success(socialService.getUserTagIds(getLoginUserId()));
     }
 
     // ========== 用户社交主页 ==========

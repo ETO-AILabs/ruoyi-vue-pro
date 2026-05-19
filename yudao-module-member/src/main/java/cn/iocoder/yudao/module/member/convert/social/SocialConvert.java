@@ -39,6 +39,9 @@ public interface SocialConvert {
     @Mapping(source = "sex", target = "sex")
     @Mapping(source = "userDesc", target = "userDesc")
     @Mapping(source = "wechat", target = "wechat")
+    @Mapping(source = "residence", target = "residence")
+    @Mapping(source = "mbti", target = "mbti")
+    @Mapping(source = "profession", target = "profession")
     AppSocialUserDetailRespVO convert(MemberUserDO bean);
 
     AppSocialSchoolSearchRespVO convertSchool(MemberGroupDO bean);

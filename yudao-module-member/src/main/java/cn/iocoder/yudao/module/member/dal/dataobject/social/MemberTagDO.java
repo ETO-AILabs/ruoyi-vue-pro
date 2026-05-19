@@ -28,6 +28,18 @@ public class MemberTagDO extends TenantBaseDO {
      */
     private String tagName;
     /**
+     * 父ID，0=根节点
+     */
+    private Long parentId;
+    /**
+     * 分类编码
+     */
+    private String category;
+    /**
+     * 标签编码(前端用，同分组内唯一)
+     */
+    private String code;
+    /**
      * 排序
      */
     private Integer sort;

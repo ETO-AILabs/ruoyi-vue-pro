@@ -40,4 +40,13 @@ public class AppSocialUserDetailRespVO {
     @Schema(description = "学校名称", example = "北京大学")
     private String schoolName;
 
+    @Schema(description = "常驻地", example = "杭州·西湖区")
+    private String residence;
+
+    @Schema(description = "MBTI性格类型", example = "INTJ")
+    private String mbti;
+
+    @Schema(description = "职业", example = "产品经理")
+    private String profession;
+
 }

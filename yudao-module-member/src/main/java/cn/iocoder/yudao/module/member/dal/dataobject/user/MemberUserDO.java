@@ -148,6 +148,18 @@ public class MemberUserDO extends TenantBaseDO {
      * 个人描述
      */
     private String userDesc;
+    /**
+     * 常驻地(格式：杭州·西湖区)
+     */
+    private String residence;
+    /**
+     * MBTI性格类型
+     */
+    private String mbti;
+    /**
+     * 职业
+     */
+    private String profession;
 
     /**
      * 会员标签列表，以逗号分隔
