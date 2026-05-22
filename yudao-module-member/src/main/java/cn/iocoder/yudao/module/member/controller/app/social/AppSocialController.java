@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.*;
 import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberTagDO;
 import cn.iocoder.yudao.module.member.service.social.MatchService;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;

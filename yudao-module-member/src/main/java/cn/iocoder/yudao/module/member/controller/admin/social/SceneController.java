@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.member.controller.admin.social;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.member.controller.admin.social.vo.*;
 import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneDO;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
@@ -88,7 +90,12 @@ public class SceneController {
     @Operation(summary = "获得场景分页")
     @PreAuthorize("@ss.hasPermission('member:social:scene:query')")
     public CommonResult<PageResult<SceneRespVO>> getScenePage(@Valid ScenePageReqVO reqVO) {
-        PageResult<MemberSceneDO> page = memberSceneMapper.selectPage(reqVO);
+        PageResult<MemberSceneDO> page = memberSceneMapper.selectPage(reqVO,
+                new LambdaQueryWrapperX<MemberSceneDO>()
+                        .likeIfPresent(MemberSceneDO::getSceneName, reqVO.getSceneName())
+                        .eqIfPresent(MemberSceneDO::getSceneType, reqVO.getSceneType())
+                        .eqIfPresent(MemberSceneDO::getSceneStatus, reqVO.getSceneStatus())
+                        .orderByDesc(MemberSceneDO::getId));
         // 手动转换
         PageResult<SceneRespVO> result = new PageResult<>();
         result.setList(page.getList().stream().map(scene -> {
@@ -100,7 +107,7 @@ public class SceneController {
             resp.setSceneStatus(scene.getSceneStatus());
             resp.setCreateTime(scene.getCreateTime());
             return resp;
-        }).toList());
+        }).collect(Collectors.toList()));
         result.setTotal(page.getTotal());
         return success(result);
     }

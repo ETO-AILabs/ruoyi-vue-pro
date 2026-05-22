@@ -190,6 +190,19 @@ CREATE TABLE `member_tag` (
 ### 5.1 新增文件
 
 ```
+────────┬────────────────────────────────┬────────┐
+  │ Method │              Path              │ Status │
+  ├────────┼────────────────────────────────┼────────┤
+  │ POST   │ /member/user/clone             │ ✅     │
+  ├────────┼────────────────────────────────┼────────┤
+  │ GET    │ /member/user/clone/info        │ ✅     │
+  ├────────┼────────────────────────────────┼────────┤
+  │ PUT    │ /member/user/clone             │ ✅     │
+  ├────────┼────────────────────────────────┼────────┤
+  │ POST   │ /member/user/nickname/generate │ ✅     │
+  ├────────┼────────────────────────────────┼────────┤
+  │ GET    │ /member/user/avatar/random     │ ✅     │
+  └────────┴────────────────────────────────┴────────┘
 # Controller - App
 yudao-module-member/src/main/java/cn/iocoder/yudao/module/member/controller/app/social/AppSocialController.java
 yudao-module-member/src/main/java/cn/iocoder/yudao/module/member/controller/app/social/vo/AppSocialSceneRespVO.java

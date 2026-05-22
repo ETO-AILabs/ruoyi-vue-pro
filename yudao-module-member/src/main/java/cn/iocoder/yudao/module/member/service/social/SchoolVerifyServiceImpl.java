@@ -95,7 +95,7 @@ public class SchoolVerifyServiceImpl implements SchoolVerifyService {
                     verify.getVerifyStatus(),
                     verify.getCreateTime()
             );
-        }).toList();
+        }).collect(Collectors.toList());
 
         return new PageResult<>(list, page.getTotal());
     }
