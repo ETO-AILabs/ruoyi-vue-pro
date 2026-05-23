@@ -16,6 +16,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +30,7 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.NICKNAME_G
 public class NicknameServiceImpl implements NicknameService {
 
     private static final int DAILY_LIMIT = 3;
-    private static final List<String> FALLBACK_NAMES = List.of(
+    private static final List<String> FALLBACK_NAMES = Arrays.asList(
             "风中的羽翼", "星空追梦人", "阳光少年", "星辰大海", "清风徐来",
             "月光诗人", "远行的风", "山间清泉", "云端的梦", "彩虹彼岸");
 
@@ -82,14 +84,14 @@ public class NicknameServiceImpl implements NicknameService {
         }
         try {
             // OpenAI 兼容格式请求
-            Map<String, Object> requestBody = Map.of(
-                    "model", deepSeekProperties.getModel(),
-                    "messages", List.of(Map.of(
-                            "role", "user",
-                            "content", "生成一个中文昵称，2-4个字，风格文艺清新，只返回昵称本身不要多余文字")),
-                    "temperature", deepSeekProperties.getTemperature(),
-                    "max_tokens", 20
-            );
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", deepSeekProperties.getModel());
+            Map<String, String> msg = new HashMap<>();
+            msg.put("role", "user");
+            msg.put("content", "生成一个中文昵称，2-4个字，风格文艺清新，只返回昵称本身不要多余文字");
+            requestBody.put("messages", Arrays.asList(msg));
+            requestBody.put("temperature", deepSeekProperties.getTemperature());
+            requestBody.put("max_tokens", 20);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

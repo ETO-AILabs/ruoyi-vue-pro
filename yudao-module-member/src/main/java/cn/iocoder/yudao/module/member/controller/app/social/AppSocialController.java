@@ -7,7 +7,7 @@ import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneDO;
-import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberTagDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 import cn.iocoder.yudao.module.member.service.social.MatchService;
 import cn.iocoder.yudao.module.member.service.social.SchoolVerifyService;
 import cn.iocoder.yudao.module.member.service.social.SocialService;

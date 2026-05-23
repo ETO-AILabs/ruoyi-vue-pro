@@ -4,7 +4,7 @@ import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialSceneFor
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialUserDetailRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneDO;
-import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberTagDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 
 import java.util.List;
 import java.util.Map;

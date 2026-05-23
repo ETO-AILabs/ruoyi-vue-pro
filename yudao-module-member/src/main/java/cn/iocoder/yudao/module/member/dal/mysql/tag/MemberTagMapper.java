@@ -7,6 +7,8 @@ import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagPageReqVO
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 /**
  * 会员标签 Mapper
  *
@@ -25,4 +27,36 @@ public interface MemberTagMapper extends BaseMapperX<MemberTagDO> {
     default MemberTagDO selelctByName(String name) {
         return selectOne(MemberTagDO::getName, name);
     }
+
+    default List<MemberTagDO> selectListByStatus(Integer status) {
+        return selectList(new LambdaQueryWrapperX<MemberTagDO>()
+                .eq(MemberTagDO::getStatus, status)
+                .orderByAsc(MemberTagDO::getSort));
+    }
+
+    default List<MemberTagDO> selectListByParentId(Long parentId) {
+        return selectList(new LambdaQueryWrapperX<MemberTagDO>()
+                .eq(MemberTagDO::getParentId, parentId)
+                .orderByAsc(MemberTagDO::getSort));
+    }
+
+    default List<MemberTagDO> selectListByCategory(String category) {
+        return selectList(new LambdaQueryWrapperX<MemberTagDO>()
+                .eq(MemberTagDO::getCategory, category)
+                .eq(MemberTagDO::getParentId, 0L)
+                .orderByAsc(MemberTagDO::getSort));
+    }
+
+    default MemberTagDO selectByParentIdAndCode(Long parentId, String code) {
+        return selectOne(new LambdaQueryWrapperX<MemberTagDO>()
+                .eq(MemberTagDO::getParentId, parentId)
+                .eq(MemberTagDO::getCode, code));
+    }
+
+    default List<MemberTagDO> selectListByParentIds(List<Long> parentIds) {
+        return selectList(new LambdaQueryWrapperX<MemberTagDO>()
+                .in(MemberTagDO::getParentId, parentIds)
+                .orderByAsc(MemberTagDO::getSort));
+    }
+
 }
