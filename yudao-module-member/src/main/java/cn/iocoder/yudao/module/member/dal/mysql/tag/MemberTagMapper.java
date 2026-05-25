@@ -19,13 +19,13 @@ public interface MemberTagMapper extends BaseMapperX<MemberTagDO> {
 
     default PageResult<MemberTagDO> selectPage(MemberTagPageReqVO reqVO) {
         return selectPage(reqVO, new LambdaQueryWrapperX<MemberTagDO>()
-                .likeIfPresent(MemberTagDO::getName, reqVO.getName())
+                .likeIfPresent(MemberTagDO::getTagName, reqVO.getTagName())
                 .betweenIfPresent(MemberTagDO::getCreateTime, reqVO.getCreateTime())
                 .orderByDesc(MemberTagDO::getId));
     }
 
-    default MemberTagDO selelctByName(String name) {
-        return selectOne(MemberTagDO::getName, name);
+    default MemberTagDO selectByTagName(String tagName) {
+        return selectOne(MemberTagDO::getTagName, tagName);
     }
 
     default List<MemberTagDO> selectListByStatus(Integer status) {

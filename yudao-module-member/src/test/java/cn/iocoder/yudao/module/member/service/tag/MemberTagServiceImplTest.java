@@ -109,17 +109,17 @@ public class MemberTagServiceImplTest extends BaseDbUnitTest {
     public void testGetTagPage() {
         // mock 数据
         MemberTagDO dbTag = randomPojo(MemberTagDO.class, o -> { // 等会查询到
-            o.setName("test");
+            o.setTagName("test");
             o.setCreateTime(buildTime(2023, 2, 18));
         });
         tagMapper.insert(dbTag);
-        // 测试 name 不匹配
-        tagMapper.insert(cloneIgnoreId(dbTag, o -> o.setName("ne")));
+        // 测试 tagName 不匹配
+        tagMapper.insert(cloneIgnoreId(dbTag, o -> o.setTagName("ne")));
         // 测试 createTime 不匹配
         tagMapper.insert(cloneIgnoreId(dbTag, o -> o.setCreateTime(null)));
         // 准备参数
         MemberTagPageReqVO reqVO = new MemberTagPageReqVO();
-        reqVO.setName("test");
+        reqVO.setTagName("test");
         reqVO.setCreateTime(buildBetweenTime(2023, 2, 1, 2023, 2, 28));
 
         // 调用

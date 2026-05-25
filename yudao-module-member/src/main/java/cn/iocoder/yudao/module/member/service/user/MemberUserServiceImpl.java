@@ -399,7 +399,7 @@ public class MemberUserServiceImpl implements MemberUserService {
         if (tag == null) {
             throw exception(TAG_NOT_EXISTS);
         }
-        return tag.getTagName() != null ? tag.getTagName() : tag.getName();
+        return tag.getTagName();
     }
 
     @Override

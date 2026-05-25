@@ -39,7 +39,7 @@ public class MemberTagServiceImpl implements MemberTagService {
     @Override
     public Long createTag(MemberTagCreateReqVO createReqVO) {
         // 校验名称唯一
-        validateTagNameUnique(null, createReqVO.getName());
+        validateTagNameUnique(null, createReqVO.getTagName());
         // 插入
         MemberTagDO tag = MemberTagConvert.INSTANCE.convert(createReqVO);
         memberTagMapper.insert(tag);
@@ -52,7 +52,7 @@ public class MemberTagServiceImpl implements MemberTagService {
         // 校验存在
         validateTagExists(updateReqVO.getId());
         // 校验名称唯一
-        validateTagNameUnique(updateReqVO.getId(), updateReqVO.getName());
+        validateTagNameUnique(updateReqVO.getId(), updateReqVO.getTagName());
         // 更新
         MemberTagDO updateObj = MemberTagConvert.INSTANCE.convert(updateReqVO);
         memberTagMapper.updateById(updateObj);
@@ -74,11 +74,11 @@ public class MemberTagServiceImpl implements MemberTagService {
         }
     }
 
-    private void validateTagNameUnique(Long id, String name) {
-        if (StrUtil.isBlank(name)) {
+    private void validateTagNameUnique(Long id, String tagName) {
+        if (StrUtil.isBlank(tagName)) {
             return;
         }
-        MemberTagDO tag = memberTagMapper.selelctByName(name);
+        MemberTagDO tag = memberTagMapper.selectByTagName(tagName);
         if (tag == null) {
             return;
         }

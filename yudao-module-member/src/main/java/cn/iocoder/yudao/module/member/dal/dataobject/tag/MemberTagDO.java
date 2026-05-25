@@ -29,10 +29,6 @@ public class MemberTagDO extends BaseDO {
     /**
      * 标签名称
      */
-    private String name;
-    /**
-     * 标签名称（预置标签使用）
-     */
     private String tagName;
     /**
      * 父ID，0=根节点
