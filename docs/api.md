@@ -31,6 +31,20 @@
 
 ## 1. 分身（AppMemberUserController, `/member/user`）
 
+### 创建分身前必须调用的初始化接口
+
+按以下顺序调用，获取页面所需选项数据：
+
+| 顺序 | 接口 | 用途 |
+|------|------|------|
+| 1 | `POST /member/user/nickname/generate` | 生成随机昵称（前端只读展示，日限3次） |
+| 2 | `GET /member/user/avatar/random` | 随机头像（可选，预览用；创建分身时后端会再随机一次） |
+| 3 | `GET /member/social/region/tree` | 省市区三级树（常住地选择器数据源） |
+| 4 | `GET /member/social/tag/list?category=profession` | 职业标签列表（chip 单选） |
+| 5 | `GET /member/social/school/search?name=xxx` | 学校搜索（用户输入时调用，可选） |
+
+MBTI 固定 16 个值，由前端硬编码：`INTJ/INTP/ENTJ/ENTP/INFJ/INFP/ENFJ/ENFP/ISTJ/ISFJ/ESTJ/ESFJ/ISTP/ISFP/ESTP/ESFP`。
+
 ### 1.1 创建分身
 
 `POST /member/user/clone`
@@ -39,23 +53,27 @@ Request `AppMemberUserCloneCreateReqVO`:
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| nickname | String | 是 | 昵称 |
+| nickname | String | 是 | 昵称（取自 `/nickname/generate`） |
 | sex | Integer | 是 | 性别 1男 2女 |
 | birthday | LocalDateTime | 是 | 出生日期 |
-| longitude | BigDecimal | 是 | 经度 |
-| latitude | BigDecimal | 是 | 纬度 |
-| location | String | 是 | 地理位置名称 |
-| tagIds | List\<Long\> | 否 | 标签ID列表（S2 后建议改走 `/user-tag/batch-save`） |
-| groupId | Long | 否 | 学校ID |
+| residence | String | 是 | 常驻地，格式 `城市 · 区`，如 `杭州 · 西湖区` |
+| mbti | String | 是 | MBTI 16 种值之一 |
+| professionTagId | Long | 否 | 职业标签ID（来自 `/tag/list?category=profession`） |
+| groupId | Long | 否 | 学校ID（来自 `/school/search`） |
+| longitude | BigDecimal | 否 | 经度（兼容字段） |
+| latitude | BigDecimal | 否 | 纬度（兼容字段） |
+| location | String | 否 | 地理位置名称（兼容字段） |
+| tagIds | List\<Long\> | 否 | 兴趣标签ID列表（建议改走 `/user-tag/batch-save`） |
 | userDesc | String | 否 | 个人描述 |
 | wechat | String | 否 | 微信号 |
-| residence | String | 否 | 常驻地（S2 新增） |
-| mbti | String | 否 | MBTI（S2 新增） |
-| profession | String | 否 | 职业（S2 新增） |
 
 Response: `CommonResult<Boolean>`
 
-业务规则：`is_has_cloned=0` 才允许；创建后置 1；头像从 `member_avatars` 随机选一条写入 `member_user.avatar`
+业务规则：
+- `is_has_cloned=0` 才允许；创建后置 1
+- 头像从 `member_avatars` 随机选一条写入 `member_user.avatar`
+- `groupId` 非空时校验学校存在
+- `professionTagId` 非空时查 `member_tag` 把标签名写入 `member_user.profession`
 
 ---
 
@@ -63,7 +81,24 @@ Response: `CommonResult<Boolean>`
 
 `GET /member/user/clone/info`
 
-Response `AppMemberUserCloneInfoRespVO`: nickname, avatar, sex, birthday, longitude, latitude, location, tagIds, groupId, userDesc, wechat, residence, mbti, profession
+Response `AppMemberUserCloneInfoRespVO`:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| nickname | String | 昵称 |
+| avatar | String | 头像URL |
+| sex | Integer | 性别 |
+| birthday | LocalDateTime | 出生日期 |
+| residence | String | 常驻地 |
+| mbti | String | MBTI |
+| professionTagId | Long | 职业标签ID（暂未持久化，保留位） |
+| professionName | String | 职业名称（取自 `member_user.profession`） |
+| schoolName | String | 学校名称（按 groupId 查 member_group 补齐） |
+| groupId | Long | 学校ID |
+| longitude/latitude/location | - | 兼容字段 |
+| tagIds | List\<Long\> | 标签ID列表 |
+| userDesc | String | 个人描述 |
+| wechat | String | 微信号 |
 
 ---
 
@@ -71,9 +106,11 @@ Response `AppMemberUserCloneInfoRespVO`: nickname, avatar, sex, birthday, longit
 
 `PUT /member/user/clone`
 
-Request `AppMemberUserCloneUpdateReqVO`（字段同 create）
+Request `AppMemberUserCloneUpdateReqVO`（字段同 create，全部选填）
 
 Response: `CommonResult<Boolean>`
+
+业务规则：未创建分身时抛 `USER_NOT_CLONED`；其他校验同 create。
 
 ---
 
@@ -95,6 +132,29 @@ Response `AppMemberUserNicknameGenerateRespVO`:
 `GET /member/user/avatar/random`
 
 Response: `CommonResult<String>` (头像URL)
+
+---
+
+### 1.6 省市区树（常住地）
+
+`GET /member/social/region/tree`
+
+Response `List<AppSocialRegionTreeRespVO>`:
+```json
+[
+  {
+    "id": 110000, "name": "北京",
+    "children": [
+      {"id": 110100, "name": "北京市", "children": [
+        {"id": 110101, "name": "东城区"},
+        {"id": 110102, "name": "西城区"}
+      ]}
+    ]
+  }
+]
+```
+
+数据源：`AreaUtils`（内存加载 `area.csv`），已过滤港澳台（id ≥ 810000）。前端选择后拼接成 `城市 · 区` 提交。
 
 ---
 
@@ -287,14 +347,18 @@ Response: `CommonResult<Map<String, Object>>`
 
 ### 5.1 获取预置标签列表
 
-`GET /member/social/tag/list`
+`GET /member/social/tag/list?category=profession`
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| category | String | 否 | 分类编码，如 `profession`、`interest`；不传返回全部 |
 
 Response `List<AppSocialTagRespVO>`:
 ```json
 [{"id":1,"tagName":"运动"}]
 ```
 
-返回 `status=1` 的所有标签，按 sort 升序
+不传 category 时返回 `status=1` 全部标签，按 sort 升序；传 category 时取该分类下根节点（`parent_id=0`）。
 
 ---
 
@@ -434,8 +498,7 @@ Request `SchoolVerifyAuditReqVO`:
 
 | 方法 | 路径 | 说明 | 替代方案 |
 |------|------|------|---------|
-| GET | `/member/social/tag/tree?category=skill` | 标签树（技能分类三级树） | 临时用 `/tag/list` 全量拉取后前端组装 |
-| GET | `/member/social/tag/list-by-category?category=profession` | 按分类拉取标签 | 同上 |
+| GET | `/member/social/tag/tree?category=skill` | 标签树（技能分类三级树） | 临时用 `/tag/list?category=xxx` 拉根节点后前端拼装 |
 | GET | `/member/social/admin/tag/page` | Admin 标签分页 | 临时可用 MyBatis Plus 通用查询 |
 | POST | `/member/social/admin/tag/create` | Admin 标签创建（带 code） | - |
 | PUT | `/member/social/admin/tag/update` | Admin 标签更新 | - |
@@ -466,12 +529,17 @@ POST /match/create {sceneId, tagIds, matchGoal, matchRemark, extraFields}
 ## 创建分身
 
 ```
-GET /member/user/avatar/random              -> 头像URL
-POST /member/user/nickname/generate          -> 昵称 (日限3次)
-GET /member/social/school/search?name=xx     -> 学校列表
-POST /member/user/clone {基础信息+可选标签}    -> 写入 member_user, is_has_cloned=1
-POST /member/social/school/verify            -> 提交学校认证
-GET  /member/social/school/verify/status     -> 查询审核状态
+1. POST /member/user/nickname/generate           -> 随机昵称（日限3次）
+2. GET  /member/user/avatar/random               -> 随机头像URL（可选预览）
+3. GET  /member/social/region/tree               -> 省市区树（常住地选择器）
+4. GET  /member/social/tag/list?category=profession  -> 职业标签 chip 选项
+5. GET  /member/social/school/search?name=北京    -> 学校搜索（用户输入触发）
+6. POST /member/user/clone {nickname,sex,birthday,residence,mbti,
+                            professionTagId?,groupId?,...}
+                                                 -> 写入 member_user, is_has_cloned=1
+                                                    随机头像、若有 professionTagId 则解析为名称写入
+7. POST /member/social/school/verify             -> 提交学校认证（可选）
+8. GET  /member/social/school/verify/status      -> 查询审核状态
 ```
 
 ---

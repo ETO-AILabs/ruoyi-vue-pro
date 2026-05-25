@@ -36,6 +36,21 @@ public class AppMemberUserCloneInfoRespVO {
     @Schema(description = "地理位置名称", example = "北京市海淀区")
     private String location;
 
+    @Schema(description = "常驻地", example = "杭州 · 西湖区")
+    private String residence;
+
+    @Schema(description = "MBTI性格类型", example = "INTJ")
+    private String mbti;
+
+    @Schema(description = "职业标签ID", example = "100")
+    private Long professionTagId;
+
+    @Schema(description = "职业名称", example = "程序员")
+    private String professionName;
+
+    @Schema(description = "学校名称", example = "浙江大学")
+    private String schoolName;
+
     @Schema(description = "标签ID列表")
     private List<Long> tagIds;
 

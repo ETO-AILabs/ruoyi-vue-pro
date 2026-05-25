@@ -13,9 +13,13 @@ import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateR
 import cn.iocoder.yudao.module.member.controller.app.user.vo.*;
 import cn.iocoder.yudao.module.member.convert.auth.AuthConvert;
 import cn.iocoder.yudao.module.member.convert.user.MemberUserConvert;
+import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberAvatarsDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 import cn.iocoder.yudao.module.member.service.social.AvatarService;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
+import cn.iocoder.yudao.module.member.dal.mysql.group.MemberGroupMapper;
+import cn.iocoder.yudao.module.member.dal.mysql.tag.MemberTagMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.user.MemberUserMapper;
 import cn.iocoder.yudao.module.member.mq.producer.user.MemberUserProducer;
 import cn.iocoder.yudao.module.system.api.sms.SmsCodeApi;
@@ -64,6 +68,10 @@ public class MemberUserServiceImpl implements MemberUserService {
     private PasswordEncoder passwordEncoder;
     @Resource
     private AvatarService avatarService;
+    @Resource
+    private MemberTagMapper memberTagMapper;
+    @Resource
+    private MemberGroupMapper memberGroupMapper;
 
     @Resource
     private MemberUserProducer memberUserProducer;
@@ -327,6 +335,13 @@ public class MemberUserServiceImpl implements MemberUserService {
         if (Boolean.TRUE.equals(user.getIsHasCloned())) {
             throw exception(CLONE_ALREADY_CREATED);
         }
+        // 校验学校
+        if (reqVO.getGroupId() != null && memberGroupMapper.selectById(reqVO.getGroupId()) == null) {
+            throw exception(USER_NOT_EXISTS); // 复用：学校不存在时报错
+        }
+        // 解析职业标签
+        String professionName = resolveProfessionName(reqVO.getProfessionTagId());
+
         // 随机分配头像
         MemberAvatarsDO avatar = avatarService.getRandomAvatar();
         String avatarUrl = (avatar != null) ? avatar.getImageUrl() : null;
@@ -336,13 +351,22 @@ public class MemberUserServiceImpl implements MemberUserService {
         updateObj.setId(userId);
         updateObj.setAvatar(avatarUrl);
         updateObj.setIsHasCloned(true);
+        updateObj.setProfession(professionName);
         memberUserMapper.updateById(updateObj);
     }
 
     @Override
     public AppMemberUserCloneInfoRespVO getCloneInfo(Long userId) {
         MemberUserDO user = validateUserExists(userId);
-        return MemberUserConvert.INSTANCE.convertClone(user);
+        AppMemberUserCloneInfoRespVO resp = MemberUserConvert.INSTANCE.convertClone(user);
+        // 补全学校名称
+        if (user.getGroupId() != null) {
+            MemberGroupDO group = memberGroupMapper.selectById(user.getGroupId());
+            if (group != null) {
+                resp.setSchoolName(group.getName());
+            }
+        }
+        return resp;
     }
 
     @Override
@@ -351,10 +375,31 @@ public class MemberUserServiceImpl implements MemberUserService {
         if (!Boolean.TRUE.equals(user.getIsHasCloned())) {
             throw exception(USER_NOT_CLONED);
         }
+        // 校验学校
+        if (reqVO.getGroupId() != null && memberGroupMapper.selectById(reqVO.getGroupId()) == null) {
+            throw exception(USER_NOT_EXISTS);
+        }
+        // 解析职业标签
+        String professionName = resolveProfessionName(reqVO.getProfessionTagId());
+
         // 使用BeanUtils复制非null字段
         MemberUserDO updateObj = BeanUtils.toBean(reqVO, MemberUserDO.class);
         updateObj.setId(userId);
+        if (professionName != null) {
+            updateObj.setProfession(professionName);
+        }
         memberUserMapper.updateById(updateObj);
+    }
+
+    private String resolveProfessionName(Long professionTagId) {
+        if (professionTagId == null) {
+            return null;
+        }
+        MemberTagDO tag = memberTagMapper.selectById(professionTagId);
+        if (tag == null) {
+            throw exception(TAG_NOT_EXISTS);
+        }
+        return tag.getTagName() != null ? tag.getTagName() : tag.getName();
     }
 
     @Override

@@ -30,8 +30,14 @@ public interface MemberUserConvert {
 
     AppMemberUserInfoRespVO convert(MemberUserDO bean);
 
+    @Mappings({
+            @Mapping(target = "professionTagId", ignore = true),
+            @Mapping(target = "professionName", source = "profession"),
+            @Mapping(target = "schoolName", ignore = true)
+    })
     AppMemberUserCloneInfoRespVO convertClone(MemberUserDO bean);
 
+    @Mapping(target = "profession", ignore = true)
     MemberUserDO convert(AppMemberUserCloneCreateReqVO bean);
 
 

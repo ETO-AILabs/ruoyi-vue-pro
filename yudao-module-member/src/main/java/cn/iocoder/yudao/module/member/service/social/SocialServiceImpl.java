@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.member.service.social;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialRegionTreeRespVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialSceneFormRespVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialUserDetailRespVO;
 import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
@@ -22,6 +23,9 @@ import cn.iocoder.yudao.module.member.dal.mysql.social.MemberUserTagMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.social.MemberMatchTaskMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.user.MemberUserMapper;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.iocoder.yudao.framework.ip.core.Area;
+import cn.iocoder.yudao.framework.ip.core.enums.AreaTypeEnum;
+import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
 import cn.iocoder.yudao.module.member.enums.ErrorCodeConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,8 +98,11 @@ public class SocialServiceImpl implements SocialService {
     }
 
     @Override
-    public List<MemberTagDO> getTagList() {
-        return memberTagMapper.selectListByStatus(1);
+    public List<MemberTagDO> getTagList(String category) {
+        if (StrUtil.isBlank(category)) {
+            return memberTagMapper.selectListByStatus(1);
+        }
+        return memberTagMapper.selectListByCategory(category);
     }
 
     @Override
@@ -251,6 +258,28 @@ public class SocialServiceImpl implements SocialService {
     public List<Long> getUserTagIds(Long userId) {
         List<MemberUserTagDO> list = memberUserTagMapper.selectListByUserId(userId);
         return list.stream().map(MemberUserTagDO::getTagId).collect(toList());
+    }
+
+    @Override
+    public List<AppSocialRegionTreeRespVO> getRegionTree() {
+        List<Area> provinces = AreaUtils.getByType(AreaTypeEnum.PROVINCE, area -> area);
+        // 过滤港澳台（id >= 810000）
+        return provinces.stream()
+                .filter(p -> p.getId() < 810000)
+                .map(this::toRegionVO)
+                .collect(toList());
+    }
+
+    private AppSocialRegionTreeRespVO toRegionVO(Area area) {
+        AppSocialRegionTreeRespVO vo = new AppSocialRegionTreeRespVO();
+        vo.setId(area.getId());
+        vo.setName(area.getName());
+        if (area.getChildren() != null && !area.getChildren().isEmpty()) {
+            vo.setChildren(area.getChildren().stream()
+                    .map(this::toRegionVO)
+                    .collect(toList()));
+        }
+        return vo;
     }
 
 }

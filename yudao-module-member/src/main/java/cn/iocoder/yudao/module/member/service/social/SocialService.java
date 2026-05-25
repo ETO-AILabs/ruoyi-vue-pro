@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.member.service.social;
 
+import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialRegionTreeRespVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialSceneFormRespVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialUserDetailRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
@@ -23,8 +24,10 @@ public interface SocialService {
 
     /**
      * 获取可用标签列表
+     *
+     * @param category 分类编码，null 表示全部
      */
-    List<MemberTagDO> getTagList();
+    List<MemberTagDO> getTagList(String category);
 
     /**
      * 获取用户社交主页信息
@@ -55,5 +58,10 @@ public interface SocialService {
      * 获取用户标签ID列表
      */
     List<Long> getUserTagIds(Long userId);
+
+    /**
+     * 获取省市区树
+     */
+    List<AppSocialRegionTreeRespVO> getRegionTree();
 
 }

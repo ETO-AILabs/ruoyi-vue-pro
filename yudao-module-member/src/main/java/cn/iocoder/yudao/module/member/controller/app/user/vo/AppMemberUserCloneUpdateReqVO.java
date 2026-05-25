@@ -29,6 +29,15 @@ public class AppMemberUserCloneUpdateReqVO {
     @Schema(description = "地理位置名称", example = "北京市海淀区")
     private String location;
 
+    @Schema(description = "常驻地", example = "杭州 · 西湖区")
+    private String residence;
+
+    @Schema(description = "MBTI性格类型", example = "INTJ")
+    private String mbti;
+
+    @Schema(description = "职业标签ID", example = "100")
+    private Long professionTagId;
+
     @Schema(description = "标签ID列表")
     private List<Long> tagIds;
 

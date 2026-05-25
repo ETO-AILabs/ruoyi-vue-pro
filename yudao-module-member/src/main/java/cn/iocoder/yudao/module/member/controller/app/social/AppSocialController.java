@@ -88,10 +88,19 @@ public class AppSocialController {
     // ========== 标签 ==========
 
     @GetMapping("/tag/list")
-    @Operation(summary = "获取预置标签列表")
-    public CommonResult<List<AppSocialTagRespVO>> getTagList() {
-        List<MemberTagDO> list = socialService.getTagList();
+    @Operation(summary = "获取预置标签列表（可选分类过滤）")
+    @Parameter(name = "category", description = "分类编码，如 profession")
+    public CommonResult<List<AppSocialTagRespVO>> getTagList(@RequestParam(value = "category", required = false) String category) {
+        List<MemberTagDO> list = socialService.getTagList(category);
         return success(SocialConvert.INSTANCE.convertTagList(list));
+    }
+
+    // ========== 地区 ==========
+
+    @GetMapping("/region/tree")
+    @Operation(summary = "获取省市区树（常住地选择器）")
+    public CommonResult<List<AppSocialRegionTreeRespVO>> getRegionTree() {
+        return success(socialService.getRegionTree());
     }
 
     // ========== 匹配 ==========

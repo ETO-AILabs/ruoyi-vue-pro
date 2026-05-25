@@ -25,17 +25,25 @@ public class AppMemberUserCloneCreateReqVO {
     @NotNull(message = "出生日期不能为空")
     private LocalDateTime birthday;
 
-    @Schema(description = "经度", requiredMode = Schema.RequiredMode.REQUIRED, example = "116.397128")
-    @NotNull(message = "经度不能为空")
+    @Schema(description = "经度", example = "116.397128")
     private BigDecimal longitude;
 
-    @Schema(description = "纬度", requiredMode = Schema.RequiredMode.REQUIRED, example = "39.916527")
-    @NotNull(message = "纬度不能为空")
+    @Schema(description = "纬度", example = "39.916527")
     private BigDecimal latitude;
 
-    @Schema(description = "地理位置名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "北京市海淀区")
-    @NotEmpty(message = "地理位置不能为空")
+    @Schema(description = "地理位置名称", example = "北京市海淀区")
     private String location;
+
+    @Schema(description = "常驻地", requiredMode = Schema.RequiredMode.REQUIRED, example = "杭州 · 西湖区")
+    @NotEmpty(message = "常驻地不能为空")
+    private String residence;
+
+    @Schema(description = "MBTI性格类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "INTJ")
+    @NotEmpty(message = "MBTI不能为空")
+    private String mbti;
+
+    @Schema(description = "职业标签ID", example = "100")
+    private Long professionTagId;
 
     @Schema(description = "标签ID列表", example = "[1,2,3]")
     private List<Long> tagIds;
