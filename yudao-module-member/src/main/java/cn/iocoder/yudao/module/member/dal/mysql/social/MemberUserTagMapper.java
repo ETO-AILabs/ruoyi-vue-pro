@@ -27,4 +27,16 @@ public interface MemberUserTagMapper extends BaseMapperX<MemberUserTagDO> {
                 .in(MemberUserTagDO::getTagId, tagIds));
     }
 
+    default int deleteByUserIdAndSource(Long userId, String source) {
+        return delete(new LambdaQueryWrapperX<MemberUserTagDO>()
+                .eq(MemberUserTagDO::getUserId, userId)
+                .eq(MemberUserTagDO::getSource, source));
+    }
+
+    default List<MemberUserTagDO> selectListByUserIdAndSource(Long userId, String source) {
+        return selectList(new LambdaQueryWrapperX<MemberUserTagDO>()
+                .eq(MemberUserTagDO::getUserId, userId)
+                .eq(MemberUserTagDO::getSource, source));
+    }
+
 }

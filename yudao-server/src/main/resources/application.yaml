@@ -191,7 +191,7 @@ spring:
     moonshot: # 月之暗面（KIMI）
       api-key: sk-abc
     deepseek: # DeepSeek
-      api-key: sk-e94db327cc7d457d99a8de8810fc6b12
+      api-key: sk-09ae4abf1e6949cebb3d2cda9a0aead4
       chat:
         options:
           model: deepseek-chat

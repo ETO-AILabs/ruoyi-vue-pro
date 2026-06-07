@@ -95,6 +95,14 @@ public class AppSocialController {
         return success(SocialConvert.INSTANCE.convertTagList(list));
     }
 
+    @GetMapping("/tag/children")
+    @Operation(summary = "获取指定分类下的子标签列表")
+    @Parameter(name = "category", description = "分类编码", required = true, example = "profession")
+    public CommonResult<List<AppSocialTagRespVO>> getTagChildren(@RequestParam("category") String category) {
+        List<MemberTagDO> list = socialService.getTagChildrenByCategory(category);
+        return success(SocialConvert.INSTANCE.convertTagList(list));
+    }
+
     // ========== 地区 ==========
 
     @GetMapping("/region/tree")

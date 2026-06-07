@@ -106,6 +106,18 @@ public class SocialServiceImpl implements SocialService {
     }
 
     @Override
+    public List<MemberTagDO> getTagChildrenByCategory(String category) {
+        // 1. 先查根标签
+        List<MemberTagDO> rootTags = memberTagMapper.selectListByCategory(category);
+        if (CollUtil.isEmpty(rootTags)) {
+            return Collections.emptyList();
+        }
+        // 2. 再查所有子标签
+        List<Long> parentIds = rootTags.stream().map(MemberTagDO::getId).collect(Collectors.toList());
+        return memberTagMapper.selectListByParentIds(parentIds);
+    }
+
+    @Override
     public AppSocialUserDetailRespVO getUserDetail(Long userId) {
         MemberUserDO user = memberUserMapper.selectById(userId);
         if (user == null) {
@@ -128,13 +140,27 @@ public class SocialServiceImpl implements SocialService {
         List<MemberUserTagDO> userTags = memberUserTagMapper.selectListByUserId(userId);
         List<Long> tagIdList;
         if (CollUtil.isNotEmpty(userTags)) {
-            tagIdList = userTags.stream().map(MemberUserTagDO::getTagId).collect(toList());
+            // 过滤掉职业标签（职业单独处理）
+            tagIdList = userTags.stream()
+                    .filter(t -> !"profession".equals(t.getSource()))
+                    .map(MemberUserTagDO::getTagId)
+                    .collect(toList());
         } else {
             tagIdList = user.getTagIds();
         }
         if (CollUtil.isNotEmpty(tagIdList)) {
             List<MemberTagDO> tags = memberTagMapper.selectBatchIds(tagIdList);
             resp.setTagNames(tags.stream().map(MemberTagDO::getTagName).collect(toList()));
+        }
+
+        // 处理职业标签（从 member_user_tag 中取 source=profession）
+        List<MemberUserTagDO> professionTags = memberUserTagMapper.selectListByUserIdAndSource(userId, "profession");
+        if (CollUtil.isNotEmpty(professionTags)) {
+            Long professionTagId = professionTags.get(0).getTagId();
+            MemberTagDO professionTag = memberTagMapper.selectById(professionTagId);
+            if (professionTag != null) {
+                resp.setProfession(professionTag.getTagName());
+            }
         }
 
         // 处理学校名称

@@ -16,6 +16,8 @@ import cn.iocoder.yudao.module.member.convert.user.MemberUserConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberAvatarsDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO;
+import cn.iocoder.yudao.module.member.dal.mysql.social.MemberUserTagMapper;
 import cn.iocoder.yudao.module.member.service.social.AvatarService;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.dal.mysql.group.MemberGroupMapper;
@@ -75,6 +77,9 @@ public class MemberUserServiceImpl implements MemberUserService {
 
     @Resource
     private MemberUserProducer memberUserProducer;
+
+    @Resource
+    private MemberUserTagMapper memberUserTagMapper;
 
     @Override
     public MemberUserDO getUserByMobile(String mobile) {
@@ -339,8 +344,8 @@ public class MemberUserServiceImpl implements MemberUserService {
         if (reqVO.getGroupId() != null && memberGroupMapper.selectById(reqVO.getGroupId()) == null) {
             throw exception(USER_NOT_EXISTS); // 复用：学校不存在时报错
         }
-        // 解析职业标签
-        String professionName = resolveProfessionName(reqVO.getProfessionTagId());
+        // 保存职业标签
+        saveProfessionTag(userId, reqVO.getProfessionTagId());
 
         // 随机分配头像
         MemberAvatarsDO avatar = avatarService.getRandomAvatar();
@@ -351,7 +356,6 @@ public class MemberUserServiceImpl implements MemberUserService {
         updateObj.setId(userId);
         updateObj.setAvatar(avatarUrl);
         updateObj.setIsHasCloned(true);
-        updateObj.setProfession(professionName);
         memberUserMapper.updateById(updateObj);
     }
 
@@ -366,10 +370,21 @@ public class MemberUserServiceImpl implements MemberUserService {
                 resp.setSchoolName(group.getName());
             }
         }
+        // 查职业标签（从 member_user_tag 取 source=profession）
+        List<MemberUserTagDO> professionTags = memberUserTagMapper.selectListByUserIdAndSource(userId, "profession");
+        if (CollUtil.isNotEmpty(professionTags)) {
+            Long tagId = professionTags.get(0).getTagId();
+            resp.setProfessionTagId(tagId);
+            MemberTagDO tag = memberTagMapper.selectById(tagId);
+            if (tag != null) {
+                resp.setProfessionName(tag.getTagName());
+            }
+        }
         return resp;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateClone(Long userId, AppMemberUserCloneUpdateReqVO reqVO) {
         MemberUserDO user = validateUserExists(userId);
         if (!Boolean.TRUE.equals(user.getIsHasCloned())) {
@@ -379,27 +394,32 @@ public class MemberUserServiceImpl implements MemberUserService {
         if (reqVO.getGroupId() != null && memberGroupMapper.selectById(reqVO.getGroupId()) == null) {
             throw exception(USER_NOT_EXISTS);
         }
-        // 解析职业标签
-        String professionName = resolveProfessionName(reqVO.getProfessionTagId());
+        // 替换职业标签（先删旧标签，再保存新标签）
+        saveProfessionTag(userId, reqVO.getProfessionTagId());
 
         // 使用BeanUtils复制非null字段
         MemberUserDO updateObj = BeanUtils.toBean(reqVO, MemberUserDO.class);
         updateObj.setId(userId);
-        if (professionName != null) {
-            updateObj.setProfession(professionName);
-        }
         memberUserMapper.updateById(updateObj);
     }
 
-    private String resolveProfessionName(Long professionTagId) {
+    private void saveProfessionTag(Long userId, Long professionTagId) {
+        // 先删旧职业标签
+        memberUserTagMapper.deleteByUserIdAndSource(userId, "profession");
         if (professionTagId == null) {
-            return null;
+            return;
         }
+        // 校验标签存在
         MemberTagDO tag = memberTagMapper.selectById(professionTagId);
         if (tag == null) {
             throw exception(TAG_NOT_EXISTS);
         }
-        return tag.getTagName();
+        // 保存新职业标签
+        memberUserTagMapper.insert(MemberUserTagDO.builder()
+                .userId(userId)
+                .tagId(professionTagId)
+                .source("profession")
+                .build());
     }
 
     @Override

@@ -95,7 +95,7 @@ public class AppMemberUserController {
         return success(userService.getCloneInfo(getLoginUserId()));
     }
 
-    @PutMapping("/clone")
+    @PutMapping("/clone/update")
     @Operation(summary = "更新分身信息")
     public CommonResult<Boolean> updateClone(@RequestBody @Valid AppMemberUserCloneUpdateReqVO reqVO) {
         userService.updateClone(getLoginUserId(), reqVO);

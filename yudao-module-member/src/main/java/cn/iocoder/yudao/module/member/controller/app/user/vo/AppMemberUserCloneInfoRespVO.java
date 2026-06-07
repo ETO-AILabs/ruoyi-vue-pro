@@ -63,4 +63,7 @@ public class AppMemberUserCloneInfoRespVO {
     @Schema(description = "微信号", example = "wx123")
     private String wechat;
 
+    @Schema(description = "是否已创建分身", example = "true")
+    private Boolean isHasCloned;
+
 }

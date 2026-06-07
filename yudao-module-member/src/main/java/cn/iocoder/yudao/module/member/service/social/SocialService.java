@@ -30,6 +30,14 @@ public interface SocialService {
     List<MemberTagDO> getTagList(String category);
 
     /**
+     * 根据父级分类编码获取子标签列表
+     *
+     * @param category 分类编码，如 profession
+     * @return 子标签列表
+     */
+    List<MemberTagDO> getTagChildrenByCategory(String category);
+
+    /**
      * 获取用户社交主页信息
      */
     AppSocialUserDetailRespVO getUserDetail(Long userId);
