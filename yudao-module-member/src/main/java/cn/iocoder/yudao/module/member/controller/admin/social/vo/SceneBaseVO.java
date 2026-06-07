@@ -9,8 +9,8 @@ import javax.validation.constraints.NotNull;
 @Data
 public class SceneBaseVO {
 
-    @Schema(description = "场景编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "1001")
-    private Long sceneCode;
+    @Schema(description = "场景编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "buddy")
+    private String sceneCode;
 
     @Schema(description = "场景类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "场景类型不能为空")

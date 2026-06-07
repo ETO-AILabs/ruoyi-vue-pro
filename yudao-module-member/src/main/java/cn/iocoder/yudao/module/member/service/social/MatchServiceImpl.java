@@ -10,6 +10,7 @@ import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialMatchSce
 import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskResultDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO;
 import cn.iocoder.yudao.module.member.dal.mysql.social.MemberMatchTaskMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.social.MemberMatchTaskResultMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.social.MemberUserTagMapper;
@@ -70,19 +71,25 @@ public class MatchServiceImpl implements MatchService {
             }
         }
 
-        // 3. 保存标签（覆盖式）
-        if (CollUtil.isNotEmpty(reqVO.getTagIds())) {
-            // 先删 self 来源标签
-            memberUserTagMapper.delete(new LambdaQueryWrapperX<cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO>()
-                    .eq(cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO::getUserId, userId)
-                    .eq(cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO::getSource, "self"));
-            // 再插入
-            for (Long tagId : reqVO.getTagIds()) {
-                memberUserTagMapper.insert(cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO.builder()
-                        .userId(userId)
-                        .tagId(tagId)
-                        .source("self")
-                        .build());
+        // 3. 保存标签（覆盖式，按 section 分组）
+        if (reqVO.getSectionTags() != null && !reqVO.getSectionTags().isEmpty()) {
+            for (Map.Entry<String, List<Long>> entry : reqVO.getSectionTags().entrySet()) {
+                String source = entry.getKey(); // "buddy:buddy_activity" 等
+                List<Long> tagIds = entry.getValue();
+                // 删该 section 的旧标签
+                memberUserTagMapper.delete(new LambdaQueryWrapperX<MemberUserTagDO>()
+                        .eq(MemberUserTagDO::getUserId, userId)
+                        .eq(MemberUserTagDO::getSource, source));
+                // 插入新标签
+                if (CollUtil.isNotEmpty(tagIds)) {
+                    for (Long tagId : tagIds) {
+                        memberUserTagMapper.insert(MemberUserTagDO.builder()
+                                .userId(userId)
+                                .tagId(tagId)
+                                .source(source)
+                                .build());
+                    }
+                }
             }
         }
 

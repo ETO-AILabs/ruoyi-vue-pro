@@ -16,8 +16,8 @@ public class AppSocialMatchCreateReqVO {
     @NotNull(message = "场景ID不能为空")
     private Long sceneId;
 
-    @Schema(description = "选中的标签ID列表", example = "[101, 102, 301]")
-    private List<Long> tagIds;
+    @Schema(description = "按区块分组的标签ID映射, key=sceneCode:sectionCode", example = "{\"buddy:buddy_activity\": [101], \"buddy:interest_tags\": [102, 103]}")
+    private Map<String, List<Long>> sectionTags;
 
     @Schema(description = "匹配诉求", example = "想找个一起打篮球的朋友")
     private String matchGoal;

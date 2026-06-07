@@ -27,7 +27,7 @@ public class MemberSceneDO extends TenantBaseDO {
     /**
      * 场景编码
      */
-    private Long sceneCode;
+    private String sceneCode;
     /**
      * 场景类型 1-校外 2-校园
      */

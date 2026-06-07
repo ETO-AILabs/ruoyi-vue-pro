@@ -14,8 +14,8 @@ public class AppSocialSceneRespVO {
     @Schema(description = "场景主键ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long id;
 
-    @Schema(description = "场景编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "1001")
-    private Long sceneCode;
+    @Schema(description = "场景编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "buddy")
+    private String sceneCode;
 
     @Schema(description = "场景名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "校园交友")
     private String sceneName;
