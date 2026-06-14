@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.service.social;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
@@ -11,9 +12,11 @@ import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskResultDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.dal.mysql.social.MemberMatchTaskMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.social.MemberMatchTaskResultMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.social.MemberUserTagMapper;
+import cn.iocoder.yudao.module.member.dal.mysql.user.MemberUserMapper;
 import cn.iocoder.yudao.module.member.enums.ErrorCodeConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,8 @@ public class MatchServiceImpl implements MatchService {
     private MemberMatchTaskResultMapper memberMatchTaskResultMapper;
     @Resource
     private MemberUserTagMapper memberUserTagMapper;
+    @Resource
+    private MemberUserMapper memberUserMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -93,7 +98,19 @@ public class MatchServiceImpl implements MatchService {
             }
         }
 
-        // 4. 构造 matchConfig
+        // 4. 如有微信号或常驻地，同步到用户表
+        if (reqVO.getExtraFields() != null) {
+            String wechat = (String) reqVO.getExtraFields().get("wechat");
+            String residence = (String) reqVO.getExtraFields().get("residence");
+            if (StrUtil.isNotBlank(wechat) || StrUtil.isNotBlank(residence)) {
+                MemberUserDO.MemberUserDOBuilder builder = MemberUserDO.builder().id(userId);
+                if (StrUtil.isNotBlank(wechat)) builder.wechat(wechat);
+                if (StrUtil.isNotBlank(residence)) builder.residence(residence);
+                memberUserMapper.updateById(builder.build());
+            }
+        }
+
+        // 5. 构造 matchConfig
         String matchConfig = null;
         if (reqVO.getExtraFields() != null) {
             Map<String, Object> config = new HashMap<>();
@@ -101,7 +118,7 @@ public class MatchServiceImpl implements MatchService {
             matchConfig = JSONUtil.toJsonStr(config);
         }
 
-        // 5. 创建匹配任务
+        // 6. 创建匹配任务
         MemberMatchTaskDO task = MemberMatchTaskDO.builder()
                 .userId(userId)
                 .sceneId(reqVO.getSceneId())

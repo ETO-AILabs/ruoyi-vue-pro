@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.service.social;
 
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialRegionTreeRespVO;
+import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialSceneFormDataVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialSceneFormRespVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialUserDetailRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
@@ -45,7 +46,7 @@ public interface SocialService {
     /**
      * 获取场景表单（区块标题 → 子分组 → 标签列表）
      */
-    List<AppSocialSceneFormRespVO> getSceneForm(String sceneCode, Long userId);
+    AppSocialSceneFormDataVO getSceneForm(String sceneCode, Long userId);
 
     /**
      * 保存场景匹配配置（标签选中 + 额外字段）

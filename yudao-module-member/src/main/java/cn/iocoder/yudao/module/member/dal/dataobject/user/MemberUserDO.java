@@ -162,6 +162,21 @@ public class MemberUserDO extends TenantBaseDO {
     private String profession;
 
     /**
+     * 身高(cm)
+     */
+    private Integer height;
+
+    /**
+     * 家乡（格式：杭州 · 西湖区）
+     */
+    private String hometown;
+
+    /**
+     * 收入档位：1=学生 2=5k↓ 3=5-10k 4=10-20k 5=20-50k 6=50k↑
+     */
+    private Integer income;
+
+    /**
      * 会员标签列表，以逗号分隔
      */
     @TableField(typeHandler = LongListTypeHandler.class)

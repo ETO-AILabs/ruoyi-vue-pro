@@ -34,6 +34,25 @@ public class AppSocialSceneFormRespVO {
         @Schema(description = "分组编码(前端:key)", example = "living")
         private String groupCode;
 
+        @Schema(description = "标签列表（二级场景直接使用）")
+        private List<TagItem> tags;
+
+        @Schema(description = "三级子分组（仅 personality 场景，含性格/恋爱观下的子标签组）")
+        private List<SubSubGroup> subSubGroups;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(description = "三级子分组")
+    public static class SubSubGroup {
+
+        @Schema(description = "子分组名称", example = "情绪特质")
+        private String subGroupName;
+
+        @Schema(description = "子分组编码", example = "emotional_trait")
+        private String subGroupCode;
+
         @Schema(description = "标签列表")
         private List<TagItem> tags;
     }

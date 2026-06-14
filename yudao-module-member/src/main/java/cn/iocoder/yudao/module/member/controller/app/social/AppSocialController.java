@@ -136,9 +136,9 @@ public class AppSocialController {
     // ========== 场景表单 ==========
 
     @GetMapping("/scene/form")
-    @Operation(summary = "获取场景表单")
+    @Operation(summary = "获取场景表单（含用户微信+常驻地）")
     @Parameter(name = "sceneCode", description = "场景编码", required = true)
-    public CommonResult<List<AppSocialSceneFormRespVO>> getSceneForm(@RequestParam("sceneCode") String sceneCode) {
+    public CommonResult<AppSocialSceneFormDataVO> getSceneForm(@RequestParam("sceneCode") String sceneCode) {
         return success(socialService.getSceneForm(sceneCode, getLoginUserId()));
     }
 

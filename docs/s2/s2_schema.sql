@@ -52,4 +52,7 @@ CREATE TABLE IF NOT EXISTS `member_user_tag` (
 ALTER TABLE `member_user`
     ADD COLUMN `residence` varchar(64) DEFAULT '' COMMENT '常驻地(格式：杭州·西湖区)' AFTER `location`,
     ADD COLUMN `mbti` varchar(8) DEFAULT '' COMMENT 'MBTI性格类型' AFTER `residence`,
-    ADD COLUMN `profession` varchar(32) DEFAULT '' COMMENT '职业' AFTER `mbti`;
+    ADD COLUMN `profession` varchar(32) DEFAULT '' COMMENT '职业' AFTER `mbti`,
+    ADD COLUMN `height` int DEFAULT NULL COMMENT '身高(cm)' AFTER `profession`,
+    ADD COLUMN `hometown` varchar(64) DEFAULT '' COMMENT '家乡' AFTER `height`,
+    ADD COLUMN `income` tinyint DEFAULT NULL COMMENT '收入档位：1=学生 2=5k↓ 3=5-10k 4=10-20k 5=20-50k 6=50k↑' AFTER `hometown`;

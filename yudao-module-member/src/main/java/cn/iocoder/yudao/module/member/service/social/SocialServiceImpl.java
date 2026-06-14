@@ -2,7 +2,10 @@ package cn.iocoder.yudao.module.member.service.social;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialRegionTreeRespVO;
+import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialSceneFormDataVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialSceneFormRespVO;
 import cn.iocoder.yudao.module.member.controller.app.social.vo.AppSocialUserDetailRespVO;
 import cn.iocoder.yudao.module.member.convert.social.SocialConvert;
@@ -10,6 +13,7 @@ import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneSectionDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberSceneSectionGroupDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberMatchTaskDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.social.MemberUserTagDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
@@ -32,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -175,20 +180,57 @@ public class SocialServiceImpl implements SocialService {
     }
 
     @Override
-    public List<AppSocialSceneFormRespVO> getSceneForm(String sceneCode, Long userId) {
-        // 1. 查场景下所有区块
+    public AppSocialSceneFormDataVO getSceneForm(String sceneCode, Long userId) {
+        // 1. 查用户基础信息
+        MemberUserDO user = memberUserMapper.selectById(userId);
+        String wechat = user != null ? user.getWechat() : null;
+        String residence = user != null ? user.getResidence() : null;
+        LocalDateTime birthday = user != null ? user.getBirthday() : null;
+        Integer height = user != null ? user.getHeight() : null;
+        String hometown = user != null ? user.getHometown() : null;
+        String mbti = user != null ? user.getMbti() : null;
+        Integer income = user != null ? user.getIncome() : null;
+
+        // 1b. 查最新匹配任务，提取 aboutMe/idealTa（love 场景回显）
+        String aboutMe = null;
+        String idealTa = null;
+        try {
+            MemberSceneDO scene = memberSceneMapper.selectOne(
+                    new LambdaQueryWrapperX<MemberSceneDO>()
+                            .eq(MemberSceneDO::getSceneCode, sceneCode));
+            if (scene != null) {
+                MemberMatchTaskDO latestTask = memberMatchTaskMapper
+                        .selectLatestByUserIdAndSceneId(userId, scene.getId());
+                if (latestTask != null && StrUtil.isNotBlank(latestTask.getMatchConfig())) {
+                    JSONObject configObj = JSONUtil.parseObj(latestTask.getMatchConfig());
+                    JSONObject extraFields = configObj.getJSONObject("extraFields");
+                    if (extraFields != null) {
+                        aboutMe = extraFields.getStr("aboutMe");
+                        idealTa = extraFields.getStr("idealTa");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // ignore parse error
+        }
+
+        // 2. 查场景下所有区块
         List<MemberSceneSectionDO> sections = memberSceneSectionMapper.selectListBySceneCode(sceneCode);
         if (CollUtil.isEmpty(sections)) {
-            return Collections.emptyList();
+            AppSocialSceneFormDataVO vo = new AppSocialSceneFormDataVO(Collections.emptyList(), wechat, residence,
+                    birthday, height, hometown, mbti, income, null, null);
+            vo.setAboutMe(aboutMe);
+            vo.setIdealTa(idealTa);
+            return vo;
         }
         List<Long> sectionIds = sections.stream().map(MemberSceneSectionDO::getId).collect(toList());
 
-        // 2. 查所有区块关联的子分组
+        // 3. 查所有区块关联的子分组
         List<MemberSceneSectionGroupDO> allGroups = memberSceneSectionGroupMapper.selectListBySectionIds(sectionIds);
         Map<Long, List<MemberSceneSectionGroupDO>> groupMap = allGroups.stream()
                 .collect(Collectors.groupingBy(MemberSceneSectionGroupDO::getSectionId));
 
-        // 3. 收集所有 group_tag_id → 查 group标签 + 子标签
+        // 4. 收集所有 group_tag_id → 查 group标签 + 子标签
         Set<Long> groupTagIds = allGroups.stream()
                 .map(MemberSceneSectionGroupDO::getGroupTagId)
                 .collect(Collectors.toSet());
@@ -201,13 +243,18 @@ public class SocialServiceImpl implements SocialService {
         Map<Long, List<MemberTagDO>> leafTagMap = leafTags.stream()
                 .collect(Collectors.groupingBy(MemberTagDO::getParentId));
 
-        // 4. 查用户已选标签（只取本表单涉及的标签）
+        // 5. 查用户已选标签（只取本表单涉及的标签）
         Set<Long> allLeafIds = leafTags.stream().map(MemberTagDO::getId).collect(Collectors.toSet());
         if (CollUtil.isEmpty(allLeafIds)) {
             // 无叶子标签时直接返回区块结构（空子分组）
-            return sections.stream()
+            List<AppSocialSceneFormRespVO> emptySections = sections.stream()
                     .map(s -> new AppSocialSceneFormRespVO(s.getCode(), s.getSectionName(), Collections.emptyList()))
                     .collect(toList());
+            AppSocialSceneFormDataVO vo = new AppSocialSceneFormDataVO(emptySections, wechat, residence,
+                    birthday, height, hometown, mbti, income, null, null);
+            vo.setAboutMe(aboutMe);
+            vo.setIdealTa(idealTa);
+            return vo;
         }
 
         List<MemberUserTagDO> userTags = memberUserTagMapper.selectListByUserIdAndTagIds(userId, new ArrayList<>(allLeafIds));
@@ -215,30 +262,95 @@ public class SocialServiceImpl implements SocialService {
                 .map(MemberUserTagDO::getTagId)
                 .collect(Collectors.toSet());
 
-        // 5. 组装 3 层结构
+        // 6. 组装结构（personality 3级，其余2级）
         List<AppSocialSceneFormRespVO> result = new ArrayList<>();
         for (MemberSceneSectionDO section : sections) {
             List<MemberSceneSectionGroupDO> sectionGroups = groupMap.getOrDefault(section.getId(), Collections.emptyList());
-            List<AppSocialSceneFormRespVO.SubGroup> subGroups = new ArrayList<>();
+            boolean isPersonality = "personality".equals(section.getCode());
 
-            for (MemberSceneSectionGroupDO sg : sectionGroups) {
-                MemberTagDO groupTag = groupTagMap.get(sg.getGroupTagId());
-                if (groupTag == null) continue;
+            if (isPersonality) {
+                // === 3级组装：子分组按 parentId 归属父标签下 ===
+                Set<Long> childIds = sectionGroups.stream()
+                        .map(MemberSceneSectionGroupDO::getGroupTagId).collect(Collectors.toSet());
+                Map<Long, MemberTagDO> childTagMap = memberTagMapper.selectBatchIds(childIds).stream()
+                        .collect(Collectors.toMap(MemberTagDO::getId, t -> t));
 
-                List<MemberTagDO> children = leafTagMap.getOrDefault(sg.getGroupTagId(), Collections.emptyList());
-                List<AppSocialSceneFormRespVO.TagItem> tags = children.stream()
-                        .map(t -> new AppSocialSceneFormRespVO.TagItem(
-                                t.getId(), t.getCode(), t.getTagName(),
-                                selectedTagIds.contains(t.getId()), t.getSort()))
-                        .collect(toList());
+                Set<Long> parentIds = childTagMap.values().stream()
+                        .map(MemberTagDO::getParentId).filter(pid -> pid != null && pid != 0)
+                        .collect(Collectors.toSet());
+                Map<Long, MemberTagDO> parentTagMap = !parentIds.isEmpty()
+                        ? memberTagMapper.selectBatchIds(parentIds).stream()
+                            .collect(Collectors.toMap(MemberTagDO::getId, t -> t))
+                        : Collections.emptyMap();
 
-                subGroups.add(new AppSocialSceneFormRespVO.SubGroup(
-                        groupTag.getTagName(), groupTag.getCode(), tags));
+                // 分组：有 parentId 的归到父下，无父标签的独立
+                Map<Long, List<MemberSceneSectionGroupDO>> childrenByParent = new HashMap<>();
+                List<MemberSceneSectionGroupDO> orphanGroups = new ArrayList<>();
+                for (MemberSceneSectionGroupDO sg : sectionGroups) {
+                    MemberTagDO t = childTagMap.get(sg.getGroupTagId());
+                    if (t != null && t.getParentId() != null && t.getParentId() != 0) {
+                        childrenByParent.computeIfAbsent(t.getParentId(), k -> new ArrayList<>()).add(sg);
+                    } else {
+                        orphanGroups.add(sg);
+                    }
+                }
+
+                List<AppSocialSceneFormRespVO.SubGroup> sgResult = new ArrayList<>();
+
+                // 父标签 -> SubGroup(subSubGroups)
+                for (Map.Entry<Long, List<MemberSceneSectionGroupDO>> e : childrenByParent.entrySet()) {
+                    MemberTagDO parentTag = parentTagMap.get(e.getKey());
+                    if (parentTag == null) continue;
+                    List<AppSocialSceneFormRespVO.SubSubGroup> ssg = new ArrayList<>();
+                    for (MemberSceneSectionGroupDO child : e.getValue()) {
+                        MemberTagDO ct = childTagMap.get(child.getGroupTagId());
+                        if (ct == null) continue;
+                        List<MemberTagDO> leaves = leafTagMap.getOrDefault(child.getGroupTagId(), Collections.emptyList());
+                        List<AppSocialSceneFormRespVO.TagItem> tags = leaves.stream()
+                                .map(tag -> new AppSocialSceneFormRespVO.TagItem(tag.getId(), tag.getCode(), tag.getTagName(),
+                                        selectedTagIds.contains(tag.getId()), tag.getSort()))
+                                .collect(toList());
+                        ssg.add(new AppSocialSceneFormRespVO.SubSubGroup(ct.getTagName(), ct.getCode(), tags));
+                    }
+                    sgResult.add(new AppSocialSceneFormRespVO.SubGroup(parentTag.getTagName(), parentTag.getCode(), null, ssg));
+                }
+
+                // 孤儿子分组（无父标签，直接挂 tags）
+                for (MemberSceneSectionGroupDO sg : orphanGroups) {
+                    MemberTagDO gt = childTagMap.get(sg.getGroupTagId());
+                    if (gt == null) continue;
+                    List<MemberTagDO> leaves = leafTagMap.getOrDefault(sg.getGroupTagId(), Collections.emptyList());
+                    List<AppSocialSceneFormRespVO.TagItem> tags = leaves.stream()
+                            .map(tag -> new AppSocialSceneFormRespVO.TagItem(tag.getId(), tag.getCode(), tag.getTagName(),
+                                    selectedTagIds.contains(tag.getId()), tag.getSort()))
+                            .collect(toList());
+                    sgResult.add(new AppSocialSceneFormRespVO.SubGroup(gt.getTagName(), gt.getCode(), tags, null));
+                }
+
+                result.add(new AppSocialSceneFormRespVO(section.getCode(), section.getSectionName(), sgResult));
+
+            } else {
+                // 原有二级逻辑
+                List<AppSocialSceneFormRespVO.SubGroup> subGroups = new ArrayList<>();
+                for (MemberSceneSectionGroupDO sg : sectionGroups) {
+                    MemberTagDO groupTag = groupTagMap.get(sg.getGroupTagId());
+                    if (groupTag == null) continue;
+                    List<MemberTagDO> children = leafTagMap.getOrDefault(sg.getGroupTagId(), Collections.emptyList());
+                    List<AppSocialSceneFormRespVO.TagItem> tags = children.stream()
+                            .map(t -> new AppSocialSceneFormRespVO.TagItem(t.getId(), t.getCode(), t.getTagName(),
+                                    selectedTagIds.contains(t.getId()), t.getSort()))
+                            .collect(toList());
+                    subGroups.add(new AppSocialSceneFormRespVO.SubGroup(groupTag.getTagName(), groupTag.getCode(), tags, null));
+                }
+                result.add(new AppSocialSceneFormRespVO(section.getCode(), section.getSectionName(), subGroups));
             }
-
-            result.add(new AppSocialSceneFormRespVO(section.getCode(), section.getSectionName(), subGroups));
         }
-        return result;
+
+        AppSocialSceneFormDataVO vo = new AppSocialSceneFormDataVO(result, wechat, residence,
+                birthday, height, hometown, mbti, income, null, null);
+        vo.setAboutMe(aboutMe);
+        vo.setIdealTa(idealTa);
+        return vo;
     }
 
     @Override
