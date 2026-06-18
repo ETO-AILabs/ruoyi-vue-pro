@@ -243,8 +243,23 @@ public class SocialServiceImpl implements SocialService {
         Map<Long, List<MemberTagDO>> leafTagMap = leafTags.stream()
                 .collect(Collectors.groupingBy(MemberTagDO::getParentId));
 
+        // 4b. 技能场景（i_can_teach / i_want_learn）需要 3 级：level-2(subGroup) -> level-3(subSubGroup) -> level-4(tag)
+        // 这里多查一层 level-4（数字插画、传统绘画...）
+        Map<Long, List<MemberTagDO>> skillLevel4Map = new HashMap<>();
+        Set<Long> skillLevel4Ids = new HashSet<>();
+        boolean isSkillScene = sections.stream().anyMatch(s ->
+                "i_can_teach".equals(s.getCode()) || "i_want_learn".equals(s.getCode()));
+        if (isSkillScene && !leafTags.isEmpty()) {
+            Set<Long> level3Ids = leafTags.stream().map(MemberTagDO::getId).collect(Collectors.toSet());
+            List<MemberTagDO> level4Tags = memberTagMapper.selectListByParentIds(new ArrayList<>(level3Ids));
+            skillLevel4Map = level4Tags.stream()
+                    .collect(Collectors.groupingBy(MemberTagDO::getParentId));
+            skillLevel4Ids = level4Tags.stream().map(MemberTagDO::getId).collect(Collectors.toSet());
+        }
+
         // 5. 查用户已选标签（只取本表单涉及的标签）
-        Set<Long> allLeafIds = leafTags.stream().map(MemberTagDO::getId).collect(Collectors.toSet());
+        Set<Long> allLeafIds = new HashSet<>(leafTags.stream().map(MemberTagDO::getId).collect(Collectors.toSet()));
+        allLeafIds.addAll(skillLevel4Ids);
         if (CollUtil.isEmpty(allLeafIds)) {
             // 无叶子标签时直接返回区块结构（空子分组）
             List<AppSocialSceneFormRespVO> emptySections = sections.stream()
@@ -328,6 +343,33 @@ public class SocialServiceImpl implements SocialService {
                 }
 
                 result.add(new AppSocialSceneFormRespVO(section.getCode(), section.getSectionName(), sgResult));
+
+            } else if ("i_can_teach".equals(section.getCode()) || "i_want_learn".equals(section.getCode())) {
+                // === 技能场景：3 级结构（tab → accordion → chips）===
+                // section = 我会的技能 / 我想学的技能（根，不展示为 tab）
+                // subGroup = level-2（创意/商业/技术/生活/教学）→ 前端 tab
+                // subSubGroup = level-3（插画与绘画、视觉设计...）→ 前端 accordion
+                // tags    = level-4（数字插画、传统绘画...）→ 前端 chips
+                List<AppSocialSceneFormRespVO.SubGroup> subGroups = new ArrayList<>();
+                for (MemberSceneSectionGroupDO sg : sectionGroups) {
+                    MemberTagDO groupTag = groupTagMap.get(sg.getGroupTagId());
+                    if (groupTag == null) continue;
+                    // groupTag 是 level-2（创意技能），它的子标签是 level-3
+                    List<MemberTagDO> level3List = leafTagMap.getOrDefault(sg.getGroupTagId(), Collections.emptyList());
+                    List<AppSocialSceneFormRespVO.SubSubGroup> ssgList = new ArrayList<>();
+                    for (MemberTagDO l3 : level3List) {
+                        // l3 是 level-3（插画与绘画），它的子标签是 level-4（数字插画...）
+                        List<MemberTagDO> leaves = skillLevel4Map.getOrDefault(l3.getId(), Collections.emptyList());
+                        List<AppSocialSceneFormRespVO.TagItem> tags = leaves.stream()
+                                .map(t -> new AppSocialSceneFormRespVO.TagItem(t.getId(), t.getCode(), t.getTagName(),
+                                        selectedTagIds.contains(t.getId()), t.getSort()))
+                                .collect(toList());
+                        ssgList.add(new AppSocialSceneFormRespVO.SubSubGroup(l3.getTagName(), l3.getCode(), tags));
+                    }
+                    // subGroup 用 level-2，subSubGroups 挂 level-3，tags 挂 level-4
+                    subGroups.add(new AppSocialSceneFormRespVO.SubGroup(groupTag.getTagName(), groupTag.getCode(), null, ssgList));
+                }
+                result.add(new AppSocialSceneFormRespVO(section.getCode(), section.getSectionName(), subGroups));
 
             } else {
                 // 原有二级逻辑

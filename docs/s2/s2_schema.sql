@@ -41,10 +41,11 @@ CREATE TABLE IF NOT EXISTS `member_user_tag` (
     `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
     `user_id` bigint NOT NULL COMMENT '用户ID',
     `tag_id` bigint NOT NULL COMMENT '标签ID',
-    `source` varchar(32) DEFAULT 'self' COMMENT '来源(self=自选/auto=行为打标)',
+    `source` varchar(32) DEFAULT 'self' COMMENT '来源(self=自选/sceneCode:sectionCode=场景提交)',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_user_tag` (`user_id`, `tag_id`),
+    -- 同一用户在同一来源下不能重复加同一个标签（来源区分场景/区块）
+    UNIQUE KEY `uk_user_tag_source` (`user_id`, `tag_id`, `source`),
     KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户标签表';
 

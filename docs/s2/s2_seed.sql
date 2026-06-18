@@ -3,6 +3,28 @@
 -- ========================================
 
 -- ========================================
+-- 0. member_user_tag 表结构升级（幂等）
+--    旧 unique key: (user_id, tag_id)  → 跨场景/跨 section 不可重用同 tag
+--    新 unique key: (user_id, tag_id, source)  → 同一 source 内不重复即可
+-- ========================================
+SET @has_legacy_uk := (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'member_user_tag'
+      AND INDEX_NAME = 'uk_user_tag'
+);
+SET @has_new_uk := (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'member_user_tag'
+      AND INDEX_NAME = 'uk_user_tag_source'
+);
+SET @sql := IF(@has_legacy_uk > 0 AND @has_new_uk = 0,
+    'ALTER TABLE `member_user_tag` DROP INDEX `uk_user_tag`, ADD UNIQUE KEY `uk_user_tag_source` (`user_id`, `tag_id`, `source`)',
+    'SELECT 0');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- ========================================
 -- 1. 根分类标签 (parent_id=0, category有值)
 -- ========================================
 INSERT INTO `member_tag` (`id`, `tag_name`, `parent_id`, `category`, `code`, `sort`, `status`) VALUES

@@ -85,14 +85,26 @@ public class MatchServiceImpl implements MatchService {
                 memberUserTagMapper.delete(new LambdaQueryWrapperX<MemberUserTagDO>()
                         .eq(MemberUserTagDO::getUserId, userId)
                         .eq(MemberUserTagDO::getSource, source));
-                // 插入新标签
+                // 插入新标签：去重 + 单次批量，避免重复主键冲突
                 if (CollUtil.isNotEmpty(tagIds)) {
-                    for (Long tagId : tagIds) {
-                        memberUserTagMapper.insert(MemberUserTagDO.builder()
-                                .userId(userId)
-                                .tagId(tagId)
-                                .source(source)
-                                .build());
+                    List<MemberUserTagDO> inserts = tagIds.stream()
+                            .filter(java.util.Objects::nonNull)
+                            .distinct()
+                            .map(tagId -> MemberUserTagDO.builder()
+                                    .userId(userId)
+                                    .tagId(tagId)
+                                    .source(source)
+                                    .build())
+                            .collect(java.util.stream.Collectors.toList());
+                    if (CollUtil.isNotEmpty(inserts)) {
+                        // 兜底：捕获单条 insert 的唯一键冲突，转为忽略式 upsert
+                        for (MemberUserTagDO item : inserts) {
+                            try {
+                                memberUserTagMapper.insert(item);
+                            } catch (org.springframework.dao.DuplicateKeyException e) {
+                                // 已存在则跳过，幂等
+                            }
+                        }
                     }
                 }
             }
