@@ -133,6 +133,27 @@ public class AppSocialController {
         return success(matchService.getMatchSceneData(getLoginUserId(), sceneId));
     }
 
+    @GetMapping("/match/result/list")
+    @Operation(summary = "获取首页匹配结果列表（前端 Aurora 列表用）")
+    public CommonResult<List<AppSocialMatchResultDetailVO>> getMatchResultList(@ModelAttribute AppSocialMatchDetailListReqVO reqVO) {
+        return success(matchService.getMatchResultList(getLoginUserId(),
+                reqVO == null ? new AppSocialMatchDetailListReqVO() : reqVO));
+    }
+
+    @GetMapping("/match/result/get")
+    @Operation(summary = "获取单个匹配结果详情")
+    @Parameter(name = "resultId", description = "结果ID", required = true)
+    public CommonResult<AppSocialMatchResultDetailVO> getMatchResultDetail(@RequestParam("resultId") Long resultId) {
+        return success(matchService.getMatchResultDetail(getLoginUserId(), resultId));
+    }
+
+    @PostMapping("/match/result/added")
+    @Operation(summary = "标记匹配结果为「已添加」")
+    public CommonResult<Boolean> markMatchResultAdded(@RequestBody @Valid AppSocialMatchResultAddedReqVO reqVO) {
+        matchService.markMatchResultAdded(getLoginUserId(), reqVO.getResultId());
+        return success(true);
+    }
+
     // ========== 场景表单 ==========
 
     @GetMapping("/scene/form")

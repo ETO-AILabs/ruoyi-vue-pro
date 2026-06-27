@@ -66,5 +66,6 @@ public interface ErrorCodeConstants {
     ErrorCode USER_NOT_CLONED = new ErrorCode(1_004_013_007, "用户尚未创建分身");
     ErrorCode TAG_NOT_EXISTS_V2 = new ErrorCode(1_004_013_008, "标签不存在");
     ErrorCode SCHOOL_VERIFY_NOT_EXISTS = new ErrorCode(1_004_013_009, "学校认证记录不存在");
+    ErrorCode MATCH_RESULT_NOT_FOUND = new ErrorCode(1_004_013_010, "匹配结果不存在或无权访问");
 
 }

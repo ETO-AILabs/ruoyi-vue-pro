@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /**
  * 匹配结果 DO
  *
@@ -39,5 +41,25 @@ public class MemberMatchTaskResultDO extends TenantBaseDO {
      * 匹配结果
      */
     private String matchResult;
+    /**
+     * AI 推荐理由
+     */
+    private String aiReason;
+    /**
+     * 开始聊的建议
+     */
+    private String chatTip;
+    /**
+     * 场景扩展数据(JSON: currentStatus/teachSkill/wantSkill/offer/want/photos/conditionValue 等)
+     */
+    private String extension;
+    /**
+     * 是否已添加 0-否 1-是
+     */
+    private Integer isAdded;
+    /**
+     * 添加时间
+     */
+    private LocalDateTime addedTime;
 
 }
