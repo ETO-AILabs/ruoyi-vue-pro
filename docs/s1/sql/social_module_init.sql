@@ -187,16 +187,16 @@ INSERT INTO `member_tag` (`tag_name`, `sort`, `status`) VALUES
 
 -- 预置头像
 INSERT INTO `member_avatars` (`image_url`) VALUES
-('https://example.com/avatar/1.png'),
-('https://example.com/avatar/2.png'),
-('https://example.com/avatar/3.png'),
-('https://example.com/avatar/4.png'),
-('https://example.com/avatar/5.png'),
-('https://example.com/avatar/6.png'),
-('https://example.com/avatar/7.png'),
-('https://example.com/avatar/8.png'),
-('https://example.com/avatar/9.png'),
-('https://example.com/avatar/10.png');
+('https://i.pravatar.cc/300?img=12'),
+('https://i.pravatar.cc/300?img=15'),
+('https://i.pravatar.cc/300?img=23'),
+('https://i.pravatar.cc/300?img=32'),
+('https://i.pravatar.cc/300?img=33'),
+('https://i.pravatar.cc/300?img=44'),
+('https://i.pravatar.cc/300?img=47'),
+('https://i.pravatar.cc/300?img=51'),
+('https://i.pravatar.cc/300?img=56'),
+('https://i.pravatar.cc/300?img=68');
 
 -- 兜底场景（scope_type=0, scope_id=0）
 INSERT INTO `member_scene` (`scene_code`, `scene_type`, `scene_name`, `scene_status`) VALUES

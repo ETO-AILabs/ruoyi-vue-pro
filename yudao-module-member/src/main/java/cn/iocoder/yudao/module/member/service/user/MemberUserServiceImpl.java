@@ -354,7 +354,9 @@ public class MemberUserServiceImpl implements MemberUserService {
         // 更新用户信息
         MemberUserDO updateObj = MemberUserConvert.INSTANCE.convert(reqVO);
         updateObj.setId(userId);
-        updateObj.setAvatar(avatarUrl);
+        if (StrUtil.isNotBlank(avatarUrl)) {
+            updateObj.setAvatar(avatarUrl);
+        }
         updateObj.setIsHasCloned(true);
         memberUserMapper.updateById(updateObj);
     }
@@ -424,9 +426,12 @@ public class MemberUserServiceImpl implements MemberUserService {
 
     @Override
     public String randomizeAvatar(Long userId) {
-        MemberUserDO user = validateUserExists(userId);
+        validateUserExists(userId);
         MemberAvatarsDO avatar = avatarService.getRandomAvatar();
         String avatarUrl = (avatar != null) ? avatar.getImageUrl() : null;
+        if (StrUtil.isBlank(avatarUrl)) {
+            return null;
+        }
         memberUserMapper.updateById(new MemberUserDO().setId(userId).setAvatar(avatarUrl));
         return avatarUrl;
     }
