@@ -37,6 +37,17 @@ public interface FileService {
                       String name, String directory, String type);
 
     /**
+     * 从 base64 字符串保存文件，并返回访问路径
+     *
+     * @param base64     base64 字符串（不含 data:image/xxx;base64, 前缀）
+     * @param name       文件名（含后缀）
+     * @param directory  目录
+     * @param type       MIME 类型
+     * @return 文件访问 URL
+     */
+    String createFileFromBase64(String base64, String name, String directory, String type);
+
+    /**
      * 生成文件预签名地址信息，用于上传
      *
      * @param name      文件名

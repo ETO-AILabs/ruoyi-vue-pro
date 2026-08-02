@@ -54,6 +54,31 @@ public class FileController {
                 uploadReqVO.getDirectory(), file.getContentType()));
     }
 
+    @PostMapping("/upload-base64")
+    @Operation(summary = "Base64 上传文件", description = "模式三：前端用 FileReader.readAsDataURL 读取后通过此接口上传，" +
+            "解决 H5 blob: 临时路径 / uni.uploadFile 跨域 preflight / S3 直传配置错误等问题")
+    public CommonResult<String> uploadFileBase64(@Valid @RequestBody FileBase64UploadReqVO reqVO) {
+        String url = fileService.createFileFromBase64(reqVO.getBase64(),
+                reqVO.getName(), reqVO.getDirectory(), reqVO.getContentType());
+        return success(url);
+    }
+
+    @PostMapping("/upload-base64-batch")
+    @Operation(summary = "Base64 批量上传文件", description = "一次上传多个文件，返回 URL 数组（顺序与请求一致）")
+    public CommonResult<java.util.List<String>> uploadFileBase64Batch(
+            @Valid @RequestBody FileBase64UploadReqVO reqVO) {
+        if (reqVO.getFiles() == null || reqVO.getFiles().isEmpty()) {
+            return success(java.util.Collections.emptyList());
+        }
+        java.util.List<String> urls = new java.util.ArrayList<>(reqVO.getFiles().size());
+        for (FileBase64UploadReqVO.FileItem item : reqVO.getFiles()) {
+            String url = fileService.createFileFromBase64(item.getBase64(),
+                    item.getName(), reqVO.getDirectory(), item.getContentType());
+            urls.add(url);
+        }
+        return success(urls);
+    }
+
     @GetMapping("/presigned-url")
     @Operation(summary = "获取文件预签名地址（上传）", description = "模式二：前端上传文件：用于前端直接上传七牛、阿里云 OSS 等文件存储器")
     @Parameters({
