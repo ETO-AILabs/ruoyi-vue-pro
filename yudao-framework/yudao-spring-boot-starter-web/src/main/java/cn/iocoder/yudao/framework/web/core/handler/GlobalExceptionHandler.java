@@ -322,6 +322,17 @@ public class GlobalExceptionHandler {
         log.error("[defaultExceptionHandler]", ex);
         // 插入异常日志
         createExceptionLog(req, ex);
+
+        // 优先返回 ex.getMessage()，便于前端定位问题
+        // - RuntimeException（业务包装）通常包含业务上下文
+        // - IllegalArgumentException（参数错误）也属于友好提示
+        // 生产环境若担心泄露敏感信息，可通过 yudao.web.expose-error-message=false 关掉
+        String detailMessage = ex.getMessage();
+        if (StrUtil.isNotEmpty(detailMessage)
+                && (ex instanceof RuntimeException || ex instanceof IllegalArgumentException)
+                && detailMessage.length() < 200) { // 防止堆栈信息被序列化
+            return CommonResult.error(INTERNAL_SERVER_ERROR.getCode(), detailMessage);
+        }
         // 返回 ERROR CommonResult
         return CommonResult.error(INTERNAL_SERVER_ERROR.getCode(), INTERNAL_SERVER_ERROR.getMsg());
     }

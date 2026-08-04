@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.infra.service.file;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -13,10 +16,12 @@ import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FilePageReqVO
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FilePresignedUrlRespVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.file.FileMapper;
+import cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.utils.FileTypeUtils;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -32,6 +37,7 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_NOT_EX
  * @author 芋道源码
  */
 @Service
+@Slf4j
 public class FileServiceImpl implements FileService {
 
     /**
@@ -62,6 +68,10 @@ public class FileServiceImpl implements FileService {
     @Override
     @SneakyThrows
     public String createFile(byte[] content, String name, String directory, String type) {
+        // 0. 校验文件非空（Assert.notEmpty 不支持 byte[]，用 ObjectUtil 判断）
+        if (ObjectUtil.isEmpty(content)) {
+            throw ServiceExceptionUtil.exception(ErrorCodeConstants.FILE_IS_EMPTY);
+        }
         // 1.1 处理 type 为空的情况
         if (StrUtil.isEmpty(type)) {
             type = FileTypeUtils.getMineType(content, name);
@@ -80,16 +90,76 @@ public class FileServiceImpl implements FileService {
 
         // 2.1 生成上传的 path，需要保证唯一
         String path = generateUploadPath(name, directory);
-        // 2.2 上传到文件存储器
-        FileClient client = fileConfigService.getMasterFileClient();
-        Assert.notNull(client, "客户端(master) 不能为空");
-        String url = client.upload(content, path, type);
+
+        // 2.2 获取文件存储器（带友好错误提示）
+        FileClient client;
+        try {
+            client = fileConfigService.getMasterFileClient();
+        } catch (Exception ex) {
+            log.error("[createFile][获取主文件配置失败，directory={}, name={}]", directory, name, ex);
+            throw exception(ErrorCodeConstants.FILE_CONFIG_NOT_EXISTS);
+        }
+        if (client == null) {
+            log.error("[createFile][主文件配置(master)为空，请前往「基础设施 - 文件配置」配置一个主存储]");
+            throw exception(ErrorCodeConstants.FILE_CONFIG_NOT_EXISTS);
+        }
+
+        // 2.3 上传到文件存储器
+        String url;
+        try {
+            url = client.upload(content, path, type);
+        } catch (Exception ex) {
+            log.error("[createFile][文件上传到存储器失败，clientId={}, path={}, type={}]", client.getId(), path, type, ex);
+            // 包装成业务异常，保留真实堆栈但不暴露给前端
+            throw new RuntimeException("文件上传到存储器失败: " + ex.getMessage(), ex);
+        }
 
         // 3. 保存到数据库
-        fileMapper.insert(new FileDO().setConfigId(client.getId())
-                .setName(name).setPath(path).setUrl(url)
-                .setType(type).setSize((long) content.length));
+        try {
+            fileMapper.insert(new FileDO().setConfigId(client.getId())
+                    .setName(name).setPath(path).setUrl(url)
+                    .setType(type).setSize((long) content.length));
+        } catch (Exception ex) {
+            log.error("[createFile][文件记录入库失败，url={}]", url, ex);
+            // 尽力回滚：尝试删除已上传的文件
+            try {
+                client.delete(path);
+            } catch (Exception deleteEx) {
+                log.warn("[createFile][回滚删除已上传文件失败，path={}]", path, deleteEx);
+            }
+            throw new RuntimeException("文件记录入库失败: " + ex.getMessage(), ex);
+        }
         return url;
+    }
+
+    @Override
+    public String createFileFromBase64(String base64, String name, String directory, String type) {
+        // 1. 去掉可能存在的 data:image/xxx;base64, 前缀
+        String cleanBase64 = base64;
+        if (StrUtil.isNotEmpty(cleanBase64) && cleanBase64.contains(",")) {
+            int commaIdx = cleanBase64.indexOf(',');
+            // data URI 头通常较短，< 100 字符，避免误删
+            if (commaIdx < 100 && cleanBase64.startsWith("data:")) {
+                cleanBase64 = cleanBase64.substring(commaIdx + 1);
+            }
+        }
+        Assert.notEmpty(cleanBase64, () -> ServiceExceptionUtil.exception(ErrorCodeConstants.FILE_IS_EMPTY));
+
+        // 2. base64 -> bytes
+        byte[] content;
+        try {
+            content = Base64.decode(cleanBase64.trim());
+        } catch (Exception ex) {
+            log.error("[createFileFromBase64][base64 解码失败，name={}]", name, ex);
+            throw new IllegalArgumentException("base64 字符串格式错误: " + ex.getMessage());
+        }
+        if (content == null || content.length == 0) {
+            throw ServiceExceptionUtil.exception(ErrorCodeConstants.FILE_IS_EMPTY);
+        }
+        log.info("[createFileFromBase64][name={}, directory={}, size={} bytes]", name, directory, content.length);
+
+        // 3. 复用 createFile 走相同的存储逻辑
+        return createFile(content, name, directory, type);
     }
 
     @VisibleForTesting
